@@ -40,7 +40,7 @@ Scope.prototype.on = function(path, callback){
 };
 
 function Ooze(model){
-    this._model = model;
+    this._model = model || {};
     this._events = createEvents(this.get.bind(this));
     return new Scope(this);
 }
