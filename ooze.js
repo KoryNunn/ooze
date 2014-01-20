@@ -15,8 +15,18 @@ Scope.prototype.set = function(path, value){
 
     this._ooze.set(resolvedPath, value);
 };
-Scope.prototype.createSetter = function(path){
-    return this._ooze.set.bind(this, this.resolve(path));
+Scope.prototype.bind = function(path, callback){
+    var resolvedPath = this.resolve(path),
+        scope = this;
+
+    this._ooze.on(path, callback);
+
+    return function(value){
+        if(arguments.length === 0){
+            return scope._ooze.get(resolvedPath);
+        }
+        scope._ooze.set(resolvedPath, value);
+    };
 };
 Scope.prototype.scopeTo = function(path){
     return new Scope(this._ooze, this.resolve(path));

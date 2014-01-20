@@ -11,9 +11,10 @@ model.set('things', {
     }
 });
 
-scoped.on('stuff majiger whatsits.foo', function(stuff, majiger, foo){
-    console.log(stuff, majiger, foo);
-    console.log(this);
+var binding = model.bind('things.majiger', function(majiger){
+    console.log(majiger);
 });
 
-model.set('things.whatsits.foo', 9);
+console.log(binding());
+
+binding(12);
