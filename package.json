@@ -1,0 +1,14 @@
+{
+  "name": "ooze",
+  "version": "0.0.0",
+  "description": "",
+  "main": "ooze.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD",
+  "dependencies": {
+    "weakmap": "0.0.x"
+  }
+}
