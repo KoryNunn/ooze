@@ -19,7 +19,7 @@ Scope.prototype.bind = function(path, callback){
     var resolvedPath = this.resolve(path),
         scope = this;
 
-    this._ooze.on(path, callback);
+    callback && this._ooze.on(path, callback);
 
     return function(value){
         if(arguments.length === 0){
