@@ -11,10 +11,16 @@ model.set('things', {
     }
 });
 
-var binding = model.bind('things.majiger', function(majiger){
+var callback = function(majiger){
     console.log(majiger);
-});
+};
+
+var binding = model.bind('things.majiger', callback);
 
 console.log(binding());
 
 binding(12);
+
+model.off('things.majiger', callback);
+
+binding(13);

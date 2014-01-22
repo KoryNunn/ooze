@@ -48,6 +48,16 @@ Scope.prototype.on = function(path, callback){
 
     this._ooze.on(params, callback);
 };
+Scope.prototype.removeListener =
+Scope.prototype.off = function(path, callback){
+    params = path.split(' ');
+
+    for(var i = 0; i < params.length; i++) {
+        params[i] = this.resolve(params[i]);
+    }
+
+    this._ooze.off(params, callback);
+};
 
 function Ooze(model){
     this._model = model || {};
@@ -77,7 +87,16 @@ Ooze.prototype.on = function(params, callback){
         params  = params.split(' ');
     }
 
-    this._events.on(params, applyParameters(this, params, callback));
+    callback.__oozeCallback = applyParameters(this, params, callback);
+
+    this._events.on(params, callback.__oozeCallback);
+};
+Ooze.prototype.off = function(params, callback){
+    if(typeof params === 'string'){
+        params  = params.split(' ');
+    }
+
+    this._events.off(params, callback.__oozeCallback);
 };
 Ooze.prototype.trigger = function(path){
     this._events.trigger(path);

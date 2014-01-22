@@ -189,7 +189,7 @@ module.exports = function(modelGet){
         }
     }
 
-    function off(path, callback){
+    function removeBinding(path, callback){
         if(typeof path === 'function'){
             callback = path;
             path = null;
@@ -221,6 +221,14 @@ module.exports = function(modelGet){
         }
     }
 
+    function off(paths, callback){
+        for(var i = 0; i < paths.length; i++) {
+            removeBinding(
+                paths[i],
+                callback
+            );
+        }
+    }
 
     // Add a new object who's references should be tracked.
     function addModelReference(path, object){
