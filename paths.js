@@ -13,11 +13,17 @@ function appendPath(){
 
     for(var i = 0; i < arguments.length; i++) {
         arg = arguments[i];
+        if(!arg){
+            continue;
+        }
         if(typeof arg == 'string'){
             all.push(arg);
             continue;
         }
-        all.push.apply(all, arg);
+        var pathSegment = appendPath.apply(null, arg);
+        if(pathSegment){
+            all.push(pathSegment);
+        }
     }
 
     return all.join(pathSeparator);

@@ -40,7 +40,12 @@ Scope.prototype.resolve = function(){
 };
 
 Scope.prototype.on = function(path, callback){
-    params = path.split(' ');
+    if(arguments.length === 1){
+        callback = path,
+        path = null;
+    }
+
+    var params = path ? path.split(' ') : [null];
 
     for(var i = 0; i < params.length; i++) {
         params[i] = this.resolve(params[i]);
