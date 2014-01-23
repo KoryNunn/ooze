@@ -73,6 +73,11 @@ Ooze.prototype.get = function(path){
     return modelOpperations.get(path, this._model);
 };
 Ooze.prototype.set = function(path, value){
+    if(this._transforms[path]){
+        for(var i = 0; i < this._transforms[path].length; i++) {
+            value = this._transforms[path][i](value);
+        }
+    }
     modelOpperations.set(path, value, this._model);
     this.trigger(path);
 };
@@ -105,6 +110,20 @@ Ooze.prototype.off = function(params, callback){
 };
 Ooze.prototype.trigger = function(path){
     this._events.trigger(path);
+};
+Ooze.prototype.addTransform = function(path, callback){
+    this._transforms[path] = this._transforms[path] || [];
+    this._transforms[path].push(callback);
+};
+Ooze.prototype.removeTransform = function(path, callback){
+    if(!this._transforms[path]){
+        return;
+    }
+
+    var index;
+    while(index = this._transforms[path].indexOf(callback) >= 0){
+        this._transforms[path].splice(index, 1);
+    }
 };
 
 module.exports = Ooze;
