@@ -4,23 +4,22 @@ var Ooze = require('./ooze'),
 var scoped = model.scopeTo('things');
 
 model.set('things', {
-    stuff:'a',
-    majiger:'b',
-    whatsits:{
-        foo: 8
-    }
+    thing: 2
 });
 
 var callback = function(majiger){
     console.log(majiger);
 };
 
-var binding = model.bind('things.majiger', callback);
+model.on('thing', function(value){
+    console.log(value);
+});
 
-console.log(binding());
+model.addTransform('thing', function(value){
+    return Math.max(Math.min(value, 100),0);
+});
 
-binding(12);
-
-model.off('things.majiger', callback);
-
-binding(13);
+model.set('thing', 1);
+model.set('thing', 4);
+model.set('thing', -5);
+model.set('thing', 105);
