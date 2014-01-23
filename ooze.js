@@ -63,10 +63,21 @@ Scope.prototype.off = function(path, callback){
 
     this._ooze.off(params, callback);
 };
+Scope.prototype.addTransform = function(path, callback){
+    var resolvedPath = this.resolve(path);
+
+    this._ooze.addTransform(resolvedPath, callback);
+};
+Scope.prototype.removeTransform = function(path, callback){
+    var resolvedPath = this.resolve(path);
+
+    this._ooze.removeTransform(resolvedPath, callback);
+};
 
 function Ooze(model){
     this._model = model || {};
     this._events = createEvents(this.get.bind(this));
+    this._transforms = {};
     return new Scope(this);
 }
 Ooze.prototype.get = function(path){
