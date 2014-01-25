@@ -7,14 +7,38 @@ function Scope(scope, path){
     this._ooze = scope;
     this._path = path;
 }
+
+/**
+    ## Get
+
+        scope.get(path);
+
+    Returns a value in the model at the given path.
+*/
 Scope.prototype.get = function(path){
     return this._ooze.get(this.resolve(path), this._model);
 };
+
+/**
+    ## Get
+
+        scope.set(path, value);
+
+    Set a value in the model at the given path.
+*/
 Scope.prototype.set = function(path, value){
     var resolvedPath = this.resolve(path);
 
     this._ooze.set(resolvedPath, value);
 };
+
+/**
+    ## Bind
+
+        scope.bind(path, callback);
+
+    Create a getter/setter function scoped to the given path, and bind a callback to the path while you're at it.
+*/
 Scope.prototype.bind = function(path, callback){
     var resolvedPath = this.resolve(path),
         scope = this;
@@ -28,9 +52,53 @@ Scope.prototype.bind = function(path, callback){
         scope._ooze.set(resolvedPath, value);
     };
 };
+
+/**
+    ## Scope To
+
+        scope.scopeTo(path);
+
+    Returns a new scope object at the given path
+
+    eg:
+
+    Assume a model:
+
+        {
+            things:{
+                stuff: 1
+            }
+        }
+
+    Create a scope that is relative to a given path:
+
+        var thingScope = scope.scopeTo('things');
+
+    Now calls to thingScope will be based off the path 'things':
+
+        thingsScope.get('stuff')
+
+    Will return 1
+*/
 Scope.prototype.scopeTo = function(path){
     return new Scope(this._ooze, this.resolve(path));
 };
+
+/**
+    ## Resolve
+
+        scope.resolve(path);
+
+    Returns a full path as constructed using a scopes path, and a given path.
+
+    eg:
+
+        var thingScope = scope.scopeTo('things');
+
+        thingScope.resolve('stuff');
+
+    Will return 'things.stuff'
+*/
 Scope.prototype.resolve = function(){
     var args = arrayProto.slice.call(arguments);
     if(this._path){
@@ -39,6 +107,13 @@ Scope.prototype.resolve = function(){
     return paths.append(args);
 };
 
+/**
+    ## On
+
+        scope.on(path, callback);
+
+    Set a listener for changes on the model at the given path.
+*/
 Scope.prototype.on = function(path, callback){
     if(arguments.length === 1){
         callback = path,
@@ -53,6 +128,14 @@ Scope.prototype.on = function(path, callback){
 
     this._ooze.on(params, callback);
 };
+
+/**
+    ## Off / Remove Listener
+
+        scope.off(path, callback);
+
+    Remove a previously bound listener
+*/
 Scope.prototype.removeListener =
 Scope.prototype.off = function(path, callback){
     params = path.split(' ');
@@ -63,32 +146,68 @@ Scope.prototype.off = function(path, callback){
 
     this._ooze.off(params, callback);
 };
-Scope.prototype.addTransform = function(path, callback){
+
+/**
+    ## Add Constraint
+
+        scope.addConstraint(path, function);
+
+    Add a function to call before a value is set to a path in the model.
+
+    eg:
+
+    Add a constraint only allow a value between 0 and 100
+
+        var constraintFn = scope.addConstraint('someValue', function(value){
+            return Math.max(Math.min(value, 100)0);
+        });
+
+*/
+Scope.prototype.addConstraint = function(path, callback){
     var resolvedPath = this.resolve(path);
 
-    this._ooze.addTransform(resolvedPath, callback);
+    this._ooze.addConstraint(resolvedPath, callback);
+
+    return callback;
 };
-Scope.prototype.removeTransform = function(path, callback){
+
+/**
+    ## Remove Constraint
+
+        scope.removeConstraint(path, function);
+
+    Remove an added constraint.
+
+    eg:
+
+    Remove the above constraint:
+
+        scope.removeConstraint('someValue', constraintFn);
+
+*/
+Scope.prototype.removeConstraint = function(path, callback){
     var resolvedPath = this.resolve(path);
 
-    this._ooze.removeTransform(resolvedPath, callback);
+    this._ooze.removeConstraint(resolvedPath, callback);
 };
 
 function Ooze(model){
     this._model = model || {};
     this._events = createEvents(this.get.bind(this));
-    this._transforms = {};
+    this._constraints = {};
     return new Scope(this);
 }
 Ooze.prototype.get = function(path){
     return modelOpperations.get(path, this._model);
 };
 Ooze.prototype.set = function(path, value){
-    if(this._transforms[path]){
-        for(var i = 0; i < this._transforms[path].length; i++) {
-            value = this._transforms[path][i](value);
+
+    if(this._constraints[path]){
+        for(var i = 0; i < this._constraints[path].length; i++) {
+            value = this._constraints[path][i](value);
         }
     }
+
     modelOpperations.set(path, value, this._model);
     this.trigger(path);
 };
@@ -122,18 +241,18 @@ Ooze.prototype.off = function(params, callback){
 Ooze.prototype.trigger = function(path){
     this._events.trigger(path);
 };
-Ooze.prototype.addTransform = function(path, callback){
-    this._transforms[path] = this._transforms[path] || [];
-    this._transforms[path].push(callback);
+Ooze.prototype.addConstraint = function(path, callback){
+    this._constraints[path] = this._constraints[path] || [];
+    this._constraints[path].push(callback);
 };
-Ooze.prototype.removeTransform = function(path, callback){
-    if(!this._transforms[path]){
+Ooze.prototype.removeConstraint = function(path, callback){
+    if(!this._constraints[path]){
         return;
     }
 
     var index;
-    while(index = this._transforms[path].indexOf(callback) >= 0){
-        this._transforms[path].splice(index, 1);
+    while((index = this._constraints[path].indexOf(callback)) >= 0){
+        this._constraints[path].splice(index, 1);
     }
 };
 
