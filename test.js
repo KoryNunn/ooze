@@ -12,6 +12,7 @@ var callback = function(majiger){
 };
 
 model.on('thing', function(value){
+    console.log(this);
     console.log(value);
 });
 

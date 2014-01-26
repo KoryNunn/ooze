@@ -127,6 +127,7 @@ Scope.prototype.on = function(path, callback){
     }
 
     this._ooze.on(params, callback);
+    return callback;
 };
 
 /**
