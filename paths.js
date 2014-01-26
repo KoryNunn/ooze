@@ -7,16 +7,27 @@ function pathToParts(path){
     return path.split(pathSeparator);
 }
 
+function createArgumentsKey(arguments){
+    var key = '';
+
+    for(var i = 0; i < arguments.length; i++) {
+        if(Array.isArray(arguments[i])){
+            key += createArgumentsKey(arguments[i]);
+        }else{
+            key += '|' + arguments[i];
+        }
+    }
+    return key;
+}
+
 var appendCache = {};
 function appendPath(){
-
-    // Use a rarely used character (`) to test for path the-samey-nes.
-    var joinedArgs = arrayProto.join.call(arguments, '`'),
+    var argumentsKey = createArgumentsKey(arguments),
         all = [],
         arg;
 
-    if(appendCache[joinedArgs]){
-        return appendCache[joinedArgs];
+    if(appendCache[argumentsKey]){
+        return appendCache[argumentsKey];
     }
 
     for(var i = 0; i < arguments.length; i++) {
@@ -34,7 +45,7 @@ function appendPath(){
         }
     }
 
-    return (appendCache[joinedArgs] = all.join(pathSeparator));
+    return (appendCache[argumentsKey] = all.join(pathSeparator));
 }
 
 function up(path, number){

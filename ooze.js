@@ -127,7 +127,6 @@ Scope.prototype.on = function(path, callback){
     }
 
     this._ooze.on(params, callback);
-    return callback;
 };
 
 /**
@@ -207,6 +206,15 @@ Ooze.prototype.set = function(path, value){
         for(var i = 0; i < this._constraints[path].length; i++) {
             value = this._constraints[path][i](value);
         }
+    }
+
+    if(this.get(path) === value){
+        // If you are setting the same thing that is already there,
+        // Don't raise events.
+        // Potentially an issue if you update objs directly
+        // and use .set() to try and force events.
+        // But then you should be using .trigger().
+        return;
     }
 
     modelOpperations.set(path, value, this._model);
