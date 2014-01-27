@@ -191,6 +191,22 @@ Scope.prototype.removeConstraint = function(path, callback){
     this._ooze.removeConstraint(resolvedPath, callback);
 };
 
+/**
+    ## Create Transform
+
+        scope.createTransform(path, transform);
+
+    Create a new scope that contains transformed data.
+
+*/
+Scope.prototype.createTransform = function(path, transform){
+    var resolvedPath = this.resolve(path);
+
+    this._ooze.addTransform(resolvedPath, transform);
+
+    return transform;
+};
+
 function Ooze(model){
     this._model = model || {};
     this._events = createEvents(this.get.bind(this));
@@ -263,6 +279,16 @@ Ooze.prototype.removeConstraint = function(path, callback){
     while((index = this._constraints[path].indexOf(callback)) >= 0){
         this._constraints[path].splice(index, 1);
     }
+};
+Ooze.prototype.createTransform = function(path, transform){
+
+    // Create a new Ooze instance.
+
+    // Bind the new instance to the current Ooze instance.
+
+    // Store the binding information somewhere?
+
+    // track keys somehow?
 };
 
 module.exports = Ooze;
