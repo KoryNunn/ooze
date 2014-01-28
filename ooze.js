@@ -192,10 +192,10 @@ Scope.prototype.removeConstraint = function(path, callback){
 };
 
 function Ooze(model){
-    this._model = model || {};
+    this._model = { '$': model},
     this._events = createEvents(this.get.bind(this));
     this._constraints = {};
-    return new Scope(this);
+    return new Scope(this, '$');
 }
 Ooze.prototype.get = function(path){
     return modelOpperations.get(path, this._model);
