@@ -27,6 +27,10 @@ Scope.prototype.get = function(path){
     Set a value in the model at the given path.
 */
 Scope.prototype.set = function(path, value){
+    if(arguments.length < 2){
+        value = path;
+        path = '';
+    }
     var resolvedPath = this.resolve(path);
 
     this._ooze.set(resolvedPath, value);
@@ -43,7 +47,7 @@ Scope.prototype.bind = function(path, callback){
     var resolvedPath = this.resolve(path),
         scope = this;
 
-    callback && this._ooze.on(path, callback);
+    callback && this._ooze.on(resolvedPath, callback);
 
     return function(value){
         if(arguments.length === 0){
@@ -126,7 +130,7 @@ Scope.prototype.on = function(path, callback){
         params[i] = this.resolve(params[i]);
     }
 
-    this._ooze.on(params, callback);
+    return this._ooze.on(params, callback);
 };
 
 /**
@@ -208,10 +212,10 @@ Scope.prototype.createTransform = function(path, transform){
 };
 
 function Ooze(model){
-    this._model = model || {};
+    this._model = { '$': model},
     this._events = createEvents(this.get.bind(this));
     this._constraints = {};
-    return new Scope(this);
+    return new Scope(this, '$');
 }
 Ooze.prototype.get = function(path){
     return modelOpperations.get(path, this._model);
@@ -255,6 +259,8 @@ Ooze.prototype.on = function(params, callback){
     callback.__oozeCallback = applyParameters(this, params, callback);
 
     this._events.on(params, callback.__oozeCallback);
+
+    return callback;
 };
 Ooze.prototype.off = function(params, callback){
     if(typeof params === 'string'){

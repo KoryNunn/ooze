@@ -1,14 +1,17 @@
 {
   "name": "ooze",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "",
   "main": "ooze.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/test"
   },
   "author": "",
   "license": "BSD",
   "dependencies": {
     "weakmap": "0.0.x"
+  },
+  "devDependencies": {
+    "grape": "~0.1.8"
   }
 }
