@@ -152,3 +152,95 @@ grape('bind handler', function(t){
 
     getterSetter(2);
 });
+
+grape('create transform', function(t){
+    t.plan(1);
+
+    var model = new Ooze({a:[
+            {b:1},
+            {b:1},
+            {b:2},
+            {b:1},
+            {b:2}
+        ]}),
+        transformModel = model.createTransform('a', function(a){
+            return a.filter(function(obj){
+                return obj.b >= 2;
+            });
+        });
+
+    t.equal(transformModel.get('1.b'), 2);
+});
+
+grape('transform reference', function(t){
+    t.plan(2);
+
+    var model = new Ooze({a:[
+            {b:1},
+            {b:1},
+            {b:2},
+            {b:1},
+            {b:2}
+        ]}),
+        transformModel = model.createTransform('a', function(a){
+            return a.filter(function(obj){
+                return obj.b >= 2;
+            });
+        });
+
+
+    transformModel.set('1.b', 3);
+
+    t.equal(transformModel.get('1.b'), 3);
+    t.equal(model.get('a.4.b'), 3);
+});
+
+grape('transform events', function(t){
+    t.plan(2);
+
+    var model = new Ooze({a:[
+            {b:1},
+            {b:1},
+            {b:2},
+            {b:1},
+            {b:2}
+        ]}),
+        transformModel = model.createTransform('a', function(a){
+            return a.filter(function(obj){
+                return obj.b >= 2;
+            });
+        });
+
+    model.on('a.4', function(){
+        t.pass('recieved event on root model');
+    });
+
+    transformModel.on('1', function(){
+        t.pass('recieved event on transformModel model');
+    });
+
+    transformModel.set('1.b', 3);
+});
+
+grape('transform updates', function(t){
+    t.plan(1);
+
+    var model = new Ooze({a:[
+            {b:1},
+            {b:1},
+            {b:2},
+            {b:1},
+            {b:2}
+        ]}),
+        transformModel = model.createTransform('a', function(a){
+            return a.filter(function(obj){
+                return obj.b >= 2;
+            });
+        });
+
+    transformModel.on(function(list){
+        t.equal(list.length, 3);
+    });
+
+    model.set('a.5.b', 4);
+});

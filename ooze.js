@@ -1,7 +1,8 @@
 var modelOpperations = require('./modelOperations')
     paths = require('./paths'),
     createEvents = require('./events'),
-    arrayProto = [];
+    arrayProto = [],
+    rootKey = '$';
 
 function Scope(scope, path){
     this._ooze = scope;
@@ -20,7 +21,7 @@ Scope.prototype.get = function(path){
 };
 
 /**
-    ## Get
+    ## Set
 
         scope.set(path, value);
 
@@ -31,9 +32,19 @@ Scope.prototype.set = function(path, value){
         value = path;
         path = '';
     }
-    var resolvedPath = this.resolve(path);
 
-    this._ooze.set(resolvedPath, value);
+    this._ooze.set(this.resolve(path), value);
+};
+
+/**
+    ## Remove
+
+        scope.remove(path);
+
+    Remove a key from the model at the given path.
+*/
+Scope.prototype.remove = function(path){
+    this._ooze.remove(this.resolve(path));
 };
 
 /**
@@ -206,16 +217,16 @@ Scope.prototype.removeConstraint = function(path, callback){
 Scope.prototype.createTransform = function(path, transform){
     var resolvedPath = this.resolve(path);
 
-    this._ooze.addTransform(resolvedPath, transform);
-
-    return transform;
+    return this._ooze.createTransform(resolvedPath, transform);
 };
 
 function Ooze(model){
-    this._model = { '$': model},
+    this._model = {};
+    this._model[rootKey] = model;
     this._events = createEvents(this.get.bind(this));
     this._constraints = {};
-    return new Scope(this, '$');
+    this._transformId = 0;
+    return new Scope(this, rootKey);
 }
 Ooze.prototype.get = function(path){
     return modelOpperations.get(path, this._model);
@@ -239,6 +250,27 @@ Ooze.prototype.set = function(path, value){
 
     modelOpperations.set(path, value, this._model);
     this.trigger(path);
+};
+Ooze.prototype.remove = function(path){
+    if(!path || path === rootKey){
+        delete this._model[rootKey];
+        this.trigger('');
+        return;
+    }
+
+    var lastKey = paths.toParts(path).pop(),
+        upOnePath = paths.up(path),
+        parent = this.get(upOnePath);
+
+    // Key already does not exist.
+    // Do nothing.
+    if(!(lastKey in parent)){
+        return;
+    }
+
+    delete parent[lastKey];
+
+    this.trigger(upOnePath);
 };
 
 function applyParameters(ooze, params, callback){
@@ -286,15 +318,54 @@ Ooze.prototype.removeConstraint = function(path, callback){
         this._constraints[path].splice(index, 1);
     }
 };
-Ooze.prototype.createTransform = function(path, transform){
+function compareKeys(object1, object2){
+    if (typeof object1 !== 'object' || typeof object2 !== 'object') {
+        return false;
+    }
+    var keys1 = Object.keys(object1),
+        keys2 = Object.keys(object2);
 
-    // Create a new Ooze instance.
+    if(keys1.length !== keys2.length){
+        return false;
+    }
+    for(var i = 0; i < keys1.length; i++){
+        if(keys1[i] !== keys2[i]){
+            return false;
+        }
+    }
 
-    // Bind the new instance to the current Ooze instance.
+    return true;
+}
+Ooze.prototype.createTransform = function(params, transform){
+    if(typeof params === 'string'){
+        params  = params.split(' ');
+    }
 
-    // Store the binding information somewhere?
+    var ooze = this,
+        transformId = (++this._transformId).toString(),
+        transformScope = new Scope(this, transformId);
 
-    // track keys somehow?
+    var applyTransform = function(value){
+        var oldValue = transformScope.get(),
+            newValue = transform.apply(null, arguments);
+
+        if(!compareKeys(oldValue, newValue)){
+            ooze.set(transformId, transform.apply(null, arguments));
+        }
+    };
+
+    this.on(params, applyTransform);
+
+    applyParameters(this, params, applyTransform)();
+
+    var transformScope = new Scope(this, transformId);
+
+    transformScope.destroy = function(){
+        ooze.off(params, applyTransform);
+        ooze.remove(transformId);
+    };
+
+    return transformScope;
 };
 
 module.exports = Ooze;

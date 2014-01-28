@@ -11,11 +11,7 @@ function createArgumentsKey(arguments){
     var key = '';
 
     for(var i = 0; i < arguments.length; i++) {
-        if(Array.isArray(arguments[i])){
-            key += createArgumentsKey(arguments[i]);
-        }else{
-            key += '|' + arguments[i];
-        }
+        key += ',' + arguments[i];
     }
     return key;
 }
@@ -35,7 +31,7 @@ function appendPath(){
         if(!arg){
             continue;
         }
-        if(typeof arg == 'string'){
+        if(typeof arg === 'string' || typeof arg === 'number'){
             all.push(arg);
             continue;
         }
