@@ -48,6 +48,17 @@ Scope.prototype.remove = function(path){
 };
 
 /**
+    ## Trigger
+
+        scope.trigger(path);
+
+    Emit a change event at the given path.
+*/
+Scope.prototype.trigger = function(path){
+    this._ooze.trigger(this.resolve(path));
+};
+
+/**
     ## Bind
 
         scope.bind(path, callback);
@@ -268,7 +279,11 @@ Ooze.prototype.remove = function(path){
         return;
     }
 
-    delete parent[lastKey];
+    if(Array.isArray(parent)){
+        parent.splice(lastKey, 1);
+    }else{
+        delete parent[lastKey];
+    }
 
     this.trigger(upOnePath);
 };
