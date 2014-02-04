@@ -111,6 +111,46 @@ grape('on multiple paths', function(t){
     model.set({a:1, b:2, c:3});
 });
 
+grape('on wildcards', function(t){
+    t.plan(2);
+
+    var model = new Ooze();
+
+    model.on('a.*.c', function(a, b, c){
+        t.pass();
+    });
+
+    model.set('a.b.c', true);
+    model.set('a.b.b', true);
+    model.set('b.b.c', true);
+    model.set('a.wat.c', true);
+});
+
+grape('on wildcards event', function(t){
+    t.plan(2);
+
+    var model = new Ooze();
+
+    model.on('a.*.c', function(c){
+        t.equal(this.target, '$.a.b.c');
+        t.deepEqual(this.wildcardValues, ['b']);
+    });
+
+    model.set('a.b.c', true);
+});
+
+grape('on wildcards values', function(t){
+    t.plan(1);
+
+    var model = new Ooze();
+
+    model.on('a.*.c', function(c){
+        t.equal(c, true);
+    });
+
+    model.set('a.b.c', true);
+});
+
 grape('scopeTo', function(t){
     t.plan(1);
 

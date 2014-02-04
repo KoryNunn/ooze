@@ -1,8 +1,10 @@
 var WeakMap = require('weakmap'),
     modelOperations = require('./modelOperations'),
-    paths = require('./paths'),
+    oozePaths = require('./paths'),
     get = modelOperations.get,
-    set = modelOperations.set;
+    set = modelOperations.set,
+    wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
+    arrayProto = [];
 
 var isBrowser = typeof Node != 'undefined';
 
@@ -42,8 +44,8 @@ module.exports = function(modelGet){
             references = modelValue && typeof modelValue === 'object' && modelReferences.get(modelValue),
             referencePathParts,
             referenceBubblePath,
-            pathParts = paths.toParts(path),
-            targetParts = paths.toParts(this.target),
+            pathParts = oozePaths.toParts(path),
+            targetParts = oozePaths.toParts(this.target),
             referenceTarget;
 
         // If no references, or only in the model once
@@ -53,9 +55,9 @@ module.exports = function(modelGet){
         }
 
         for(var key in references){
-            referencePathParts = paths.toParts(key);
+            referencePathParts = oozePaths.toParts(key);
 
-            referenceTarget = paths.append(referencePathParts.concat(targetParts.slice(pathParts.length)));
+            referenceTarget = oozePaths.append(referencePathParts.concat(targetParts.slice(pathParts.length)));
 
             bubbleTrigger(referenceTarget, this, true);
             this.pushPath(referenceTarget, 'target', true);
@@ -101,19 +103,19 @@ module.exports = function(modelGet){
         var reference = get(path, modelBindings);
 
         for(var key in reference){
-            var sinkPath = paths.append(path, key);
+            var sinkPath = oozePaths.append(path, key);
             emitter.pushPath(sinkPath, 'sink', skipReferences);
             sinkTrigger(sinkPath, emitter, skipReferences);
         }
     }
 
     function bubbleTrigger(path, emitter, skipReferences){
-        var pathParts = paths.toParts(path);
+        var pathParts = oozePaths.toParts(path);
 
         for(var i = 0; i < pathParts.length - 1; i++){
 
             emitter.pushPath(
-                paths.append(pathParts.slice(0, i+1)),
+                oozePaths.append(pathParts.slice(0, i+1)),
                 'bubble',
                 skipReferences
             );
@@ -127,7 +129,7 @@ module.exports = function(modelGet){
         bubbleTrigger(path, emitter);
 
         if(keysChange){
-            emitter.pushPath(paths.up(path), 'keys');
+            emitter.pushPath(oozePaths.up(path), 'keys');
         }
 
         emitter.pushPath(path, 'target');
@@ -139,13 +141,13 @@ module.exports = function(modelGet){
 
     function addReferencesForBinding(path){
         var model = modelGet(),
-            pathParts = paths.toParts(path),
+            pathParts = oozePaths.toParts(path),
             itemPath = path,
             item = get(path, model);
 
         while(typeof item !== 'object' && pathParts.length){
             pathParts.pop();
-            itemPath = paths.append(pathParts);
+            itemPath = oozePaths.append(pathParts);
             item = get(itemPath, model);
         }
 
@@ -180,12 +182,41 @@ module.exports = function(modelGet){
         addReferencesForBinding(path);
     }
 
+    function setWildcardBinding(path, callback){
+        var parts = oozePaths.toParts(path),
+            pathStub = oozePaths.append(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
+
+        var sanitized = path.replace(/(\.|\$)/g, '\\$1'),
+            wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
+            pathMatcher = new RegExp(wildcarded);
+
+        callback.__boundCallback = function(event){
+            var matchedPath = event.target.match(pathMatcher);
+
+            if(matchedPath){
+                var replaced = 0;
+                event.wildcardValues = arrayProto.slice.call(matchedPath, 1);
+                event.path = path;
+                event.resolvedPath = path.replace(wildcardRegex, function(){
+                    return event.wildcardValues[replaced++];
+                });
+
+                callback(event);
+            }
+        };
+
+        setBinding(pathStub, callback.__boundCallback);
+    }
+
     function on(paths, callback){
         for(var i = 0; i < paths.length; i++) {
-            setBinding(
-                paths[i],
-                callback
-            );
+
+            if(paths[i].indexOf(oozePaths.constants.wildcard)>=0){
+                setWildcardBinding(paths[i], callback);
+                continue;
+            }
+
+            setBinding(paths[i], callback);
         }
     }
 
@@ -222,6 +253,9 @@ module.exports = function(modelGet){
     }
 
     function off(paths, callback){
+        if(callback.__boundCallback){
+            callback = callback.__boundCallback;
+        }
         for(var i = 0; i < paths.length; i++) {
             removeBinding(
                 paths[i],
@@ -256,7 +290,7 @@ module.exports = function(modelGet){
 
             // Faster to check again here than to create pointless paths.
             if(prop && typeof prop === 'object'){
-                var refPath = paths.append(path, key);
+                var refPath = oozePaths.append(path, key);
                 if(modelReferences.has(prop)){
                     if(prop !== object){
                         modelReferences.get(prop)[refPath] = null;
@@ -291,7 +325,7 @@ module.exports = function(modelGet){
 
             // Faster to check again here than to create pointless paths.
             if(prop && typeof prop === 'object' && prop !== object){
-                removeModelReference(paths.append(path, key), prop);
+                removeModelReference(oozePaths.append(path, key), prop);
             }
         }
     }

@@ -292,6 +292,10 @@ function applyParameters(ooze, params, callback){
     return function(event){
         var args = [];
         for(var i = 0; i < params.length; i++) {
+            if(event && event.path === params[i] && event.resolvedPath){
+                args.push(ooze.get(event.resolvedPath));
+                continue;
+            }
             args.push(ooze.get(params[i]));
         }
         callback.apply(event, args);

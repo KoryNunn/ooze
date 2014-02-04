@@ -1,4 +1,5 @@
-var pathSeparator = ".";
+var pathSeparator = '.',
+    wildcard = '*';
 
 function pathToParts(path){
     if(!path){
@@ -54,6 +55,7 @@ module.exports = {
     toParts: pathToParts,
     up: up,
     constants:{
-        separator: pathSeparator
+        separator: pathSeparator,
+        wildcard: wildcard
     }
 };
