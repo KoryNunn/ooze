@@ -164,12 +164,10 @@ Scope.prototype.on = function(path, callback){
 */
 Scope.prototype.removeListener =
 Scope.prototype.off = function(path, callback){
-    if(path){
-        params = path.split(' ');
+    var params = path ? path.split(' ') : [''];
 
-        for(var i = 0; i < params.length; i++) {
-            params[i] = this.resolve(params[i]);
-        }
+    for(var i = 0; i < params.length; i++) {
+        params[i] = this.resolve(params[i]);
     }
 
     this._ooze.off(params, callback);
