@@ -57,7 +57,7 @@ module.exports = function(modelGet){
         for(var key in references){
             referencePathParts = oozePaths.toParts(key);
 
-            referenceTarget = oozePaths.append(referencePathParts.concat(targetParts.slice(pathParts.length)));
+            referenceTarget = oozePaths.join(referencePathParts.concat(targetParts.slice(pathParts.length)));
 
             bubbleTrigger(referenceTarget, this, true);
             this.pushPath(referenceTarget, 'target', true);
@@ -103,7 +103,7 @@ module.exports = function(modelGet){
         var reference = get(path, modelBindings);
 
         for(var key in reference){
-            var sinkPath = oozePaths.append(path, key);
+            var sinkPath = oozePaths.join([path, key]);
             emitter.pushPath(sinkPath, 'sink', skipReferences);
             sinkTrigger(sinkPath, emitter, skipReferences);
         }
@@ -115,7 +115,7 @@ module.exports = function(modelGet){
         for(var i = 0; i < pathParts.length - 1; i++){
 
             emitter.pushPath(
-                oozePaths.append(pathParts.slice(0, i+1)),
+                oozePaths.join(pathParts.slice(0, i+1)),
                 'bubble',
                 skipReferences
             );
@@ -147,7 +147,7 @@ module.exports = function(modelGet){
 
         while(typeof item !== 'object' && pathParts.length){
             pathParts.pop();
-            itemPath = oozePaths.append(pathParts);
+            itemPath = oozePaths.join(pathParts);
             item = get(itemPath, model);
         }
 
@@ -184,7 +184,7 @@ module.exports = function(modelGet){
 
     function setWildcardBinding(path, callback){
         var parts = oozePaths.toParts(path),
-            pathStub = oozePaths.append(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
+            pathStub = oozePaths.join(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
 
         var sanitized = path.replace(/(\.|\$)/g, '\\$1'),
             wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
@@ -290,7 +290,7 @@ module.exports = function(modelGet){
 
             // Faster to check again here than to create pointless paths.
             if(prop && typeof prop === 'object'){
-                var refPath = oozePaths.append(path, key);
+                var refPath = oozePaths.join([path, key]);
                 if(modelReferences.has(prop)){
                     if(prop !== object){
                         modelReferences.get(prop)[refPath] = null;
@@ -325,7 +325,7 @@ module.exports = function(modelGet){
 
             // Faster to check again here than to create pointless paths.
             if(prop && typeof prop === 'object' && prop !== object){
-                removeModelReference(oozePaths.append(path, key), prop);
+                removeModelReference(oozePaths.join([path, key]), prop);
             }
         }
     }

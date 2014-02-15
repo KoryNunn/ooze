@@ -125,12 +125,8 @@ Scope.prototype.scopeTo = function(path){
 
     Will return 'things.stuff'
 */
-Scope.prototype.resolve = function(){
-    var args = arrayProto.slice.call(arguments);
-    if(this._path){
-        args.unshift(this._path);
-    }
-    return paths.append(args);
+Scope.prototype.resolve = function(path){
+    return paths.join([this._path, path]);
 };
 
 /**

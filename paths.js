@@ -8,41 +8,36 @@ function pathToParts(path){
     return path.split(pathSeparator);
 }
 
-function createArgumentsKey(arguments){
-    var key = '';
-
-    for(var i = 0; i < arguments.length; i++) {
-        key += ',' + arguments[i];
-    }
-    return key;
-}
-
-var appendCache = {};
-function appendPath(){
-    var argumentsKey = createArgumentsKey(arguments),
-        all = [],
+function concat(){
+    var resultPaths = [],
         arg;
-
-    if(appendCache[argumentsKey]){
-        return appendCache[argumentsKey];
-    }
-
     for(var i = 0; i < arguments.length; i++) {
         arg = arguments[i];
-        if(!arg){
+
+        if(Array.isArray(arg)){
+            resultPaths.push(join(arg));
             continue;
         }
-        if(typeof arg === 'string' || typeof arg === 'number'){
-            all.push(arg);
-            continue;
-        }
-        var pathSegment = appendPath.apply(null, arg);
-        if(pathSegment){
-            all.push(pathSegment);
-        }
+        resultPaths.push(pathSegment);
     }
 
-    return (appendCache[argumentsKey] = all.join(pathSeparator));
+    return join(resultPaths);
+}
+
+function join(paths){
+    var resultPaths = [],
+        path;
+
+    for(var i = 0; i < paths.length; i++) {
+        path = paths[i];
+
+        if(path == null || path === ''){
+            continue;
+        }
+        resultPaths.push(path);
+    }
+
+    return resultPaths.join(pathSeparator);
 }
 
 function up(path, number){
@@ -51,7 +46,8 @@ function up(path, number){
 }
 
 module.exports = {
-    append: appendPath,
+    join: join,
+    concat: concat,
     toParts: pathToParts,
     up: up,
     constants:{
