@@ -42,7 +42,7 @@ function join(paths){
 
 function up(path, number){
     number = number || 1;
-    return appendPath(pathToParts(path).slice(0,-number));
+    return join(pathToParts(path).slice(0,-number));
 }
 
 module.exports = {
