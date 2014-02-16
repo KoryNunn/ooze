@@ -24,8 +24,11 @@ function concat(){
     return join(resultPaths);
 }
 
+// This is an extremely hot function
+// string concat is used over array.join
+// for performance.
 function join(paths){
-    var resultPaths = [],
+    var result = '',
         path;
 
     for(var i = 0; i < paths.length; i++) {
@@ -34,10 +37,16 @@ function join(paths){
         if(path == null || path === ''){
             continue;
         }
-        resultPaths.push(path);
+
+        if(result === ''){
+            result = path;
+            continue;
+        }
+
+        result += '.' + path;
     }
 
-    return resultPaths.join(pathSeparator);
+    return result;
 }
 
 function up(path, number){
