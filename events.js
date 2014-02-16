@@ -1,10 +1,10 @@
-var WeakMap = require('weakmap'),
-    modelOperations = require('./modelOperations'),
+var modelOperations = require('./modelOperations'),
     oozePaths = require('./paths'),
     get = modelOperations.get,
     set = modelOperations.set,
     wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
-    arrayProto = [];
+    arrayProto = [],
+    WM = typeof WeakMap !== 'undefined' ? WeakMap : require('weakmap');
 
 var isBrowser = typeof Node != 'undefined';
 
@@ -16,9 +16,9 @@ module.exports = function(modelGet){
 
     function resetEvents(){
         modelBindings = {};
-        modelBindingDetails = new WeakMap();
-        callbackReferenceDetails = new WeakMap();
-        modelReferences = new WeakMap();
+        modelBindingDetails = new WM();
+        callbackReferenceDetails = new WM();
+        modelReferences = new WM();
     }
 
     resetEvents();
