@@ -4,12 +4,12 @@
   "description": "",
   "main": "ooze.js",
   "scripts": {
-    "test": "node ./test/test"
+    "test": "node ./test"
   },
   "author": "",
   "license": "BSD",
   "dependencies": {
-    "weakmap": "0.0.x"
+    "weak-map": "1.0.x"
   },
   "devDependencies": {
     "grape": "~0.1.8"
