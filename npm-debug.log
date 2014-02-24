@@ -1,0 +1,142 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'pub' ]
+2 info using npm@1.3.24
+3 info using node@v0.10.25
+4 verbose node symlink /usr/bin/node
+5 verbose publish [ '.' ]
+6 verbose cache add [ '.', null ]
+7 verbose cache add name=undefined spec="." args=[".",null]
+8 verbose parsed url { protocol: null,
+8 verbose parsed url   slashes: null,
+8 verbose parsed url   auth: null,
+8 verbose parsed url   host: null,
+8 verbose parsed url   port: null,
+8 verbose parsed url   hostname: null,
+8 verbose parsed url   hash: null,
+8 verbose parsed url   search: null,
+8 verbose parsed url   query: null,
+8 verbose parsed url   pathname: '.',
+8 verbose parsed url   path: '.',
+8 verbose parsed url   href: '.' }
+9 silly lockFile 3a52ce78- .
+10 verbose lock . /home/kory/.npm/3a52ce78-.lock
+11 verbose tar pack [ '/home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz',
+11 verbose tar pack   '.' ]
+12 verbose tarball /home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+13 verbose folder .
+14 info prepublish ooze@0.0.21
+15 silly lockFile 1f1177db-tar tar://.
+16 verbose lock tar://. /home/kory/.npm/1f1177db-tar.lock
+17 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+18 verbose lock tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz /home/kory/.npm/a6f24e1b-02448-0-5183780167717487-tmp-tgz.lock
+19 silly lockFile 1f1177db-tar tar://.
+20 silly lockFile 1f1177db-tar tar://.
+21 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+22 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+23 verbose tar unpack /home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+24 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+25 verbose lock tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package /home/kory/.npm/8a7e8d36-02448-0-5183780167717487-package.lock
+26 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+27 verbose lock tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz /home/kory/.npm/a6f24e1b-02448-0-5183780167717487-tmp-tgz.lock
+28 silly gunzTarPerm modes [ '755', '644' ]
+29 silly gunzTarPerm extractEntry package.json
+30 silly gunzTarPerm extractEntry .npmignore
+31 silly gunzTarPerm extractEntry README.md
+32 silly gunzTarPerm extractEntry events.js
+33 silly gunzTarPerm extractEntry modelOperations.js
+34 silly gunzTarPerm extractEntry ooze.js
+35 silly gunzTarPerm extractEntry oozetest.js
+36 silly gunzTarPerm extractEntry paths.js
+37 silly gunzTarPerm extractEntry test/index.b.js
+38 silly gunzTarPerm extractEntry test/index.js
+39 silly gunzTarPerm extractEntry test/index.html
+40 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+41 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+42 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+43 silly lockFile a6f24e1b-02448-0-5183780167717487-tmp-tgz tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/tmp.tgz
+44 verbose tar pack [ '/home/kory/.npm/ooze/0.0.21/package.tgz',
+44 verbose tar pack   '/home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package' ]
+45 verbose tarball /home/kory/.npm/ooze/0.0.21/package.tgz
+46 verbose folder /home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+47 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+48 verbose lock tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package /home/kory/.npm/8a7e8d36-02448-0-5183780167717487-package.lock
+49 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+50 verbose lock tar:///home/kory/.npm/ooze/0.0.21/package.tgz /home/kory/.npm/d4c10693-kory-npm-ooze-0-0-21-package-tgz.lock
+51 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+52 silly lockFile 8a7e8d36-02448-0-5183780167717487-package tar:///home/kory/tmp/npm-30584-Q5_pGFTx/1393199302448-0.5183780167717487/package
+53 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+54 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+55 silly lockFile c49652b6-ome-kory-npm-ooze-0-0-21-package /home/kory/.npm/ooze/0.0.21/package
+56 verbose lock /home/kory/.npm/ooze/0.0.21/package /home/kory/.npm/c49652b6-ome-kory-npm-ooze-0-0-21-package.lock
+57 silly lockFile c49652b6-ome-kory-npm-ooze-0-0-21-package /home/kory/.npm/ooze/0.0.21/package
+58 silly lockFile c49652b6-ome-kory-npm-ooze-0-0-21-package /home/kory/.npm/ooze/0.0.21/package
+59 verbose tar unpack /home/kory/.npm/ooze/0.0.21/package.tgz
+60 silly lockFile 911c3658-ome-kory-npm-ooze-0-0-21-package tar:///home/kory/.npm/ooze/0.0.21/package
+61 verbose lock tar:///home/kory/.npm/ooze/0.0.21/package /home/kory/.npm/911c3658-ome-kory-npm-ooze-0-0-21-package.lock
+62 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+63 verbose lock tar:///home/kory/.npm/ooze/0.0.21/package.tgz /home/kory/.npm/d4c10693-kory-npm-ooze-0-0-21-package-tgz.lock
+64 silly gunzTarPerm modes [ '755', '644' ]
+65 silly gunzTarPerm extractEntry package.json
+66 silly gunzTarPerm extractEntry .npmignore
+67 silly gunzTarPerm extractEntry README.md
+68 silly gunzTarPerm extractEntry events.js
+69 silly gunzTarPerm extractEntry modelOperations.js
+70 silly gunzTarPerm extractEntry ooze.js
+71 silly gunzTarPerm extractEntry oozetest.js
+72 silly gunzTarPerm extractEntry paths.js
+73 silly gunzTarPerm extractEntry test/index.b.js
+74 silly gunzTarPerm extractEntry test/index.js
+75 silly gunzTarPerm extractEntry test/index.html
+76 silly lockFile 911c3658-ome-kory-npm-ooze-0-0-21-package tar:///home/kory/.npm/ooze/0.0.21/package
+77 silly lockFile 911c3658-ome-kory-npm-ooze-0-0-21-package tar:///home/kory/.npm/ooze/0.0.21/package
+78 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+79 silly lockFile d4c10693-kory-npm-ooze-0-0-21-package-tgz tar:///home/kory/.npm/ooze/0.0.21/package.tgz
+80 verbose chmod /home/kory/.npm/ooze/0.0.21/package.tgz 644
+81 verbose chown /home/kory/.npm/ooze/0.0.21/package.tgz [ 1000, 1000 ]
+82 silly lockFile 3a52ce78- .
+83 silly lockFile 3a52ce78- .
+84 silly publish { name: 'ooze',
+84 silly publish   version: '0.0.21',
+84 silly publish   description: 'Ooze ===',
+84 silly publish   main: 'ooze.js',
+84 silly publish   scripts: { test: 'node ./test' },
+84 silly publish   author: '',
+84 silly publish   license: 'BSD',
+84 silly publish   dependencies: { 'weak-map': '1.0.x' },
+84 silly publish   devDependencies: { grape: '~0.1.8' },
+84 silly publish   readme: 'Ooze\n===\n\nA model event wrapper. The spiritual successor to gedi\n\nOoze lets you  wrap an object in an evented getter/setter API.\n\n## Usage\n\n### Instantiation\n\n    var someModel = {\n        // properties.\n    };\n\n    var Ooze = require(\'ooze\'),\n        model = new Ooze(someModel);\n\nInstantiating Ooze returns a scope object, that can be used to access the object.\n\n\n### Get\n\n    // Simple\n    model.get(\'property\');\n\n    // Deeper into the object\n    model.get(\'property.childProp\');\n\n### Set\n\n    // Simple\n    model.set(\'property\', \'value\');\n\n    // Deeper into the object\n    model.set(\'property.childProp\', \'value\');\n\n### Listen to events\n\n    // Simple\n    model.on(\'property\', function(property){...});\n\n    // Multiple paths (Space seperated)\n    model.on(\'property anotherProperty someOtherOne.childProp.grandchildProp\', function(property, another, grandchild){...});\n\nhandlers will be called with \'this\' as the event:\n\n    model.on(\'property\', function(property){\n        var event = this;\n    });\n\nhandlers will be called if any of the bound paths changes.\n\nModel events will ONLY be raised if a change is made via Ooze. Changing values directly will not trigger handlers!\n\n### Create a new scope\n\n    var propertyModel = model.scopeTo(\'property\');\n\n    // Calls to propertyModel will all be scoped to the \'property\' path.\n\n    propertyModel.set(\'childProp\', 3);\n\n    // The above is equivilent to:\n    model.set(\'property.childProp\', 3);\n\n### Create a getter/setter\n\n    var getterSetter = model.bind(\'property\');\n\n    // Get (no arguments)\n    getterSetter();\n\n    // The above is equivilent to:\n    model.get(\'property\');\n\n    // Set (pass an argument)\n    getterSetter(3);\n\n    // The above is equivilent to:\n    model.set(\'property\', 3);',
+84 silly publish   readmeFilename: 'README.md',
+84 silly publish   _id: 'ooze@0.0.21',
+84 silly publish   dist: { shasum: 'e8430d2f5bf47f2103c5d6f82069582c18bd5ece' },
+84 silly publish   _from: '.' }
+85 verbose url raw ooze
+86 verbose url resolving [ 'https://registry.npmjs.org/', './ooze' ]
+87 verbose url resolved https://registry.npmjs.org/ooze
+88 info trying registry request attempt 1 at 09:48:22
+89 http PUT https://registry.npmjs.org/ooze
+90 http 403 https://registry.npmjs.org/ooze
+91 info trying registry request attempt 1 at 09:48:26
+92 http PUT https://registry.npmjs.org/ooze
+93 http 403 https://registry.npmjs.org/ooze
+94 error publish Failed PUT 403
+95 error Error: forbidden cannot modify pre-existing version: 0.0.21
+95 error old={"name":"ooze","version":"0.0.21","description":"Ooze ===","main":"ooze.js","scripts":{"test":"node ./test"},"author":"","license":"BSD","dependencies":{"weak-map":"1.0.x"},"devDependencies":{"grape":"~0.1.8"},"_id":"ooze@0.0.21","dist":{"shasum":"2146e604001e60e02b0e3f538a7d0ab7ca657528","tarball":"http://registry.npmjs.org/ooze/-/ooze-0.0.21.tgz"},"_from":".","_npmVersion":"1.3.2","_npmUser":{"name":"korynunn","email":"knunn187@gmail.com"},"maintainers":[{"name":"korynunn","email":"knunn187@gmail.com"}]}
+95 error new={"name":"ooze","version":"0.0.21","description":"Ooze ===","main":"ooze.js","scripts":{"test":"node ./test"},"author":"","license":"BSD","dependencies":{"weak-map":"1.0.x"},"devDependencies":{"grape":"~0.1.8"},"readme":"Ooze\u000a===\u000a\u000aA model event wrapper. The spiritual successor to gedi\u000a\u000aOoze lets you  wrap an object in an evented getter/setter API.\u000a\u000a## Usage\u000a\u000a### Instantiation\u000a\u000a    var someModel = {\u000a        // properties.\u000a    };\u000a\u000a    var Ooze = require('ooze'),\u000a        model = new Ooze(someModel);\u000a\u000aInstantiating Ooze returns a scope object, that can be used to access the object.\u000a\u000a\u000a### Get\u000a\u000a    // Simple\u000a    model.get('property');\u000a\u000a    // Deeper into the object\u000a    model.get('property.childProp');\u000a\u000a### Set\u000a\u000a    // Simple\u000a    model.set('property', 'value');\u000a\u000a    // Deeper into the object\u000a    model.set('property.childProp', 'value');\u000a\u000a### Listen to events\u000a\u000a    // Simple\u000a    model.on('property', function(property){...});\u000a\u000a    // Multiple paths (Space seperated)\u000a    model.on('property anotherProperty someOtherOne.childProp.grandchildProp', function(property, another, grandchild){...});\u000a\u000ahandlers will be called with 'this' as the event:\u000a\u000a    model.on('property', function(property){\u000a        var event = this;\u000a    });\u000a\u000ahandlers will be called if any of the bound paths changes.\u000a\u000aModel events will ONLY be raised if a change is made via Ooze. Changing values directly will not trigger handlers!\u000a\u000a### Create a new scope\u000a\u000a    var propertyModel = model.scopeTo('property');\u000a\u000a    // Calls to propertyModel will all be scoped to the 'property' path.\u000a\u000a    propertyModel.set('childProp', 3);\u000a\u000a    // The above is equivilent to:\u000a    model.set('property.childProp', 3);\u000a\u000a### Create a getter/setter\u000a\u000a    var getterSetter = model.bind('property');\u000a\u000a    // Get (no arguments)\u000a    getterSetter();\u000a\u000a    // The above is equivilent to:\u000a    model.get('property');\u000a\u000a    // Set (pass an argument)\u000a    getterSetter(3);\u000a\u000a    // The above is equivilent to:\u000a    model.set('property', 3);","readmeFilename":"README.md","_id":"ooze@0.0.21","dist":{"shasum":"e8430d2f5bf47f2103c5d6f82069582c18bd5ece","tarball":"http://registry.npmjs.org/ooze/-/ooze-0.0.21.tgz"},"_from":".","_npmVersion":"1.3.24","_npmUser":{"name":"korynunn","email":"knunn187@gmail.com"},"maintainers":[{"name":"korynunn","email":"knunn187@gmail.com"}]}: ooze
+95 error     at RegClient.<anonymous> (/usr/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:275:14)
+95 error     at Request.self.callback (/usr/lib/node_modules/npm/node_modules/request/request.js:123:22)
+95 error     at Request.EventEmitter.emit (events.js:98:17)
+95 error     at Request.<anonymous> (/usr/lib/node_modules/npm/node_modules/request/request.js:893:14)
+95 error     at Request.EventEmitter.emit (events.js:117:20)
+95 error     at IncomingMessage.<anonymous> (/usr/lib/node_modules/npm/node_modules/request/request.js:844:12)
+95 error     at IncomingMessage.EventEmitter.emit (events.js:117:20)
+95 error     at _stream_readable.js:920:16
+95 error     at process._tickCallback (node.js:415:13)
+96 error If you need help, you may report this *entire* log,
+96 error including the npm and node versions, at:
+96 error     <http://github.com/isaacs/npm/issues>
+97 error System Linux 3.11.0-12-generic
+98 error command "/usr/bin/node" "/usr/bin/npm" "pub"
+99 error cwd /home/kory/dev/ooze
+100 error node -v v0.10.25
+101 error npm -v 1.3.24
+102 verbose exit [ 1, true ]

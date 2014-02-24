@@ -238,8 +238,14 @@ module.exports = function(modelGet){
             return;
         }
 
-        var targetReference = get(path, modelBindings),
-            referenceDetails = modelBindingDetails.get(targetReference);
+        var targetReference = get(path, modelBindings);
+
+        if(!targetReference){
+            // Nothing was bound here anyway.
+            return;
+        }
+
+        var referenceDetails = modelBindingDetails.get(targetReference);
 
         if(referenceDetails){
             for(var i = 0; i < referenceDetails.length; i++) {
