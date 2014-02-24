@@ -8,7 +8,7 @@ var modelOperations = require('./modelOperations'),
 
 var isBrowser = typeof Node != 'undefined';
 
-module.exports = function(modelGet){
+module.exports = function(modelGet, ignoreReferencesInTypes){
     var modelBindings,
         modelBindingDetails,
         callbackReferenceDetails,
@@ -296,7 +296,9 @@ module.exports = function(modelGet){
                         modelReferences.get(prop)[refPath] = null;
                     }
                 }else{
-                    addModelReference(refPath, prop);
+                    if(!ignoreReferencesInTypes || !ignoreReferencesInTypes.indexOf(object.constructor)>=0){
+                        addModelReference(refPath, prop);
+                    }
                 }
             }
         }

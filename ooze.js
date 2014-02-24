@@ -227,10 +227,10 @@ Scope.prototype.createTransform = function(path, transform){
     return this._ooze.createTransform(resolvedPath, transform);
 };
 
-function Ooze(model){
+function Ooze(model, ignoreReferencesInTypes){
     this._model = {};
     this._model[rootKey] = model;
-    this._events = createEvents(this.get.bind(this));
+    this._events = createEvents(this.get.bind(this), ignoreReferencesInTypes);
     this._constraints = {};
     this._transformId = 0;
     return new Scope(this, rootKey);
