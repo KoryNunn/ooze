@@ -231,7 +231,9 @@ function Ooze(model, ignoreReferencesInTypes){
     this._model = {};
     this._model[rootKey] = model;
     this._events = createEvents(this.get.bind(this), ignoreReferencesInTypes);
-    this._constraints = {};
+    this._constraints = {
+        _wildcards: []
+    };
     this._transformId = 0;
     return new Scope(this, rootKey);
 }
@@ -240,9 +242,14 @@ Ooze.prototype.get = function(path){
 };
 Ooze.prototype.set = function(path, value){
 
-    if(this._constraints[path]){
-        for(var i = 0; i < this._constraints[path].length; i++) {
-            value = this._constraints[path][i](value);
+    if(this._constraints[path] || this._constraints._wildcards.length){
+        var constraints = this._constraints[path] || [].concat(
+                this._constraints._wildcards.filter(function(constraint){
+                    return paths.matchWildcards(constraint.path, path);
+                })
+            );
+        for(var i = 0; i < constraints.length; i++) {
+            value = constraints[i].callback(value);
         }
     }
 
@@ -320,8 +327,18 @@ Ooze.prototype.trigger = function(path){
     this._events.trigger(path);
 };
 Ooze.prototype.addConstraint = function(path, callback){
-    this._constraints[path] = this._constraints[path] || [];
-    this._constraints[path].push(callback);
+    if(paths.containsWildcards(path)){
+        this._constraints._wildcards.push({
+            path: path,
+            callback: callback
+        });
+    }else{
+        this._constraints[path] = this._constraints[path] || [];
+        this._constraints[path].push({
+            path: path,
+            callback:callback
+        });
+    }
 };
 Ooze.prototype.removeConstraint = function(path, callback){
     if(!this._constraints[path]){

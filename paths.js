@@ -1,5 +1,6 @@
 var pathSeparator = '.',
-    wildcard = '*';
+    wildcard = '*',
+    wildcardRegex = new RegExp('(\\' + wildcard + ')', 'g');
 
 function pathToParts(path){
     if(!path){
@@ -54,13 +55,28 @@ function up(path, number){
     return join(pathToParts(path).slice(0,-number));
 }
 
+function containsWildcards(path){
+    return path && path.indexOf(wildcard) >= 0;
+}
+
+function matchWildcards(wildcardedPath, path){
+    var sanitized = wildcardedPath.replace(/(\.|\$)/g, '\\$1'),
+        wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
+        pathMatcher = new RegExp(wildcarded);
+
+    return path.match(pathMatcher);
+}
+
 module.exports = {
     join: join,
     concat: concat,
     toParts: pathToParts,
     up: up,
+    containsWildcards: containsWildcards,
+    matchWildcards: matchWildcards,
     constants:{
         separator: pathSeparator,
         wildcard: wildcard
-    }
+    },
+    wildcardRegex: wildcardRegex
 };

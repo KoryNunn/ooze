@@ -2,7 +2,7 @@ var modelOperations = require('./modelOperations'),
     oozePaths = require('./paths'),
     get = modelOperations.get,
     set = modelOperations.set,
-    wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
+    wildcardRegex = oozePaths.wildcardRegex,
     arrayProto = [],
     WM = typeof WeakMap !== 'undefined' ? WeakMap : require('weak-map');
 
@@ -186,12 +186,8 @@ module.exports = function(modelGet, ignoreReferencesInTypes){
         var parts = oozePaths.toParts(path),
             pathStub = oozePaths.join(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
 
-        var sanitized = path.replace(/(\.|\$)/g, '\\$1'),
-            wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
-            pathMatcher = new RegExp(wildcarded);
-
         callback.__boundCallback = function(event){
-            var matchedPath = event.target.match(pathMatcher);
+            var matchedPath = oozePaths.matchWildcards(path, event.target);
 
             if(matchedPath){
                 var replaced = 0;
