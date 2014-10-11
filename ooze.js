@@ -262,6 +262,7 @@ Ooze.prototype.set = function(path, value){
         return;
     }
 
+    this._events.addModelReference(path, value);
     modelOpperations.set(path, value, this._model);
     this.trigger(path);
 };
