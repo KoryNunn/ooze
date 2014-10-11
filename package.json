@@ -4,7 +4,8 @@
   "description": "",
   "main": "ooze.js",
   "scripts": {
-    "test": "node ./test"
+    "test": "node ./test",
+    "watch": "watchify test/index.js -o test/index.browser.js"
   },
   "author": "",
   "license": "BSD",
@@ -12,6 +13,6 @@
     "weak-map": "1.0.x"
   },
   "devDependencies": {
-    "grape": "~0.1.8"
+    "grape": "^1.0.3"
   }
 }

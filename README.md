@@ -79,3 +79,12 @@ Model events will ONLY be raised if a change is made via Ooze. Changing values d
 
     // The above is equivilent to:
     model.set('property', 3);
+
+### Run some code against parts of the model
+
+    model.run(['some.path', 'another.path:path2'], function(scope){
+        scope.path = 5;
+        scope.path2 = 10;
+    });
+
+Note that you can alias keys to any identifyer using ```:```, otherwise the last key in the path will be used.

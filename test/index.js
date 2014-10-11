@@ -1,6 +1,10 @@
 var grape = require('grape'),
     Ooze = require('../');
 
+require('./run');
+require('./oozeRun');
+require('./scopeRun');
+
 grape('get', function(t){
     t.plan(1);
 

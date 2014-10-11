@@ -1,6 +1,7 @@
 var modelOpperations = require('./modelOperations')
     paths = require('./paths'),
     createEvents = require('./events'),
+    run = require('./run'),
     arrayProto = [],
     rootKey = '$';
 
@@ -78,6 +79,20 @@ Scope.prototype.bind = function(path, callback){
         scope._ooze.set(resolvedPath, value);
     };
 };
+
+Scope.prototype.run = function(parameters, fn){
+    if(!Array.isArray(parameters)){
+        parameters = [parameters];
+    }
+    parameters = parameters.slice();
+
+    var scope = this;
+    parameters = parameters.map(function(parameter){
+        return scope.resolve(parameter);
+    });
+    return this._ooze.run(parameters, fn);
+};
+
 
 /**
     ## Scope To
@@ -399,6 +414,10 @@ Ooze.prototype.createTransform = function(params, transform){
     };
 
     return transformScope;
+};
+
+Ooze.prototype.run = function(parameters, fn){
+    return run(this, parameters, fn);
 };
 
 module.exports = Ooze;
