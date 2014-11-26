@@ -1,7 +1,7 @@
-var grape = require('grape'),
+var test = require('tape'),
     Ooze = require('../');
 
-grape('get', function(t){
+test('get', function(t){
     t.plan(1);
 
     var model = new Ooze({a:1});
@@ -9,7 +9,7 @@ grape('get', function(t){
     t.equal(model.get('a'), 1);
 });
 
-grape('get deep', function(t){
+test('get deep', function(t){
     t.plan(1);
 
     var model = new Ooze({a:{b:1}});
@@ -17,7 +17,7 @@ grape('get deep', function(t){
     t.equal(model.get('a.b'), 1);
 });
 
-grape('set', function(t){
+test('set', function(t){
     t.plan(1);
 
     var model = new Ooze();
@@ -27,7 +27,7 @@ grape('set', function(t){
     t.equal(model.get('a'), 1);
 });
 
-grape('set deep', function(t){
+test('set deep', function(t){
     t.plan(1);
 
     var model = new Ooze();
@@ -37,7 +37,7 @@ grape('set deep', function(t){
     t.equal(model.get('a.b'), 1);
 });
 
-grape('on target', function(t){
+test('on target', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -50,7 +50,7 @@ grape('on target', function(t){
     model.set('a',1);
 });
 
-grape('on bubbled', function(t){
+test('on bubbled', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -63,7 +63,7 @@ grape('on bubbled', function(t){
     model.set('a.b',1);
 });
 
-grape('off target', function(t){
+test('off target', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -80,7 +80,7 @@ grape('off target', function(t){
     model.set('a',2);
 });
 
-grape('off bubbled', function(t){
+test('off bubbled', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -97,7 +97,7 @@ grape('off bubbled', function(t){
     model.set('a.b', 2);
 });
 
-grape('on multiple paths', function(t){
+test('on multiple paths', function(t){
     t.plan(3);
 
     var model = new Ooze();
@@ -111,7 +111,7 @@ grape('on multiple paths', function(t){
     model.set({a:1, b:2, c:3});
 });
 
-grape('on wildcards', function(t){
+test('on wildcards', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -126,7 +126,7 @@ grape('on wildcards', function(t){
     model.set('a.wat.c', true);
 });
 
-grape('on wildcards event', function(t){
+test('on wildcards event', function(t){
     t.plan(2);
 
     var model = new Ooze();
@@ -139,7 +139,7 @@ grape('on wildcards event', function(t){
     model.set('a.b.c', true);
 });
 
-grape('on wildcards values', function(t){
+test('on wildcards values', function(t){
     t.plan(1);
 
     var model = new Ooze();
@@ -151,7 +151,7 @@ grape('on wildcards values', function(t){
     model.set('a.b.c', true);
 });
 
-grape('scopeTo', function(t){
+test('scopeTo', function(t){
     t.plan(1);
 
     var model = new Ooze({a:1}),
@@ -160,7 +160,7 @@ grape('scopeTo', function(t){
     t.equal(aScope.get(), 1);
 });
 
-grape('bind get', function(t){
+test('bind get', function(t){
     t.plan(1);
 
     var model = new Ooze({a:1}),
@@ -171,7 +171,7 @@ grape('bind get', function(t){
     t.equal(getterSetter(), 1);
 });
 
-grape('bind set', function(t){
+test('bind set', function(t){
     t.plan(1);
 
     var model = new Ooze({a:1}),
@@ -182,7 +182,7 @@ grape('bind set', function(t){
     t.equal(model.get('a'), 2);
 });
 
-grape('bind handler', function(t){
+test('bind handler', function(t){
     t.plan(1);
 
     var model = new Ooze({a:1}),
@@ -193,7 +193,7 @@ grape('bind handler', function(t){
     getterSetter(2);
 });
 
-grape('create transform', function(t){
+test('create transform', function(t){
     t.plan(1);
 
     var model = new Ooze({a:[
@@ -212,7 +212,7 @@ grape('create transform', function(t){
     t.equal(transformModel.get('1.b'), 2);
 });
 
-grape('transform reference', function(t){
+test('transform reference', function(t){
     t.plan(2);
 
     var model = new Ooze({a:[
@@ -235,7 +235,7 @@ grape('transform reference', function(t){
     t.equal(model.get('a.4.b'), 3);
 });
 
-grape('transform events', function(t){
+test('transform events', function(t){
     t.plan(2);
 
     var model = new Ooze({a:[
@@ -262,7 +262,7 @@ grape('transform events', function(t){
     transformModel.set('1.b', 3);
 });
 
-grape('transform updates', function(t){
+test('transform updates', function(t){
     t.plan(1);
 
     var model = new Ooze({a:[

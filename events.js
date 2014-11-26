@@ -4,7 +4,7 @@ var modelOperations = require('./modelOperations'),
     set = modelOperations.set,
     wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
     arrayProto = [],
-    WM = typeof WeakMap !== 'undefined' ? WeakMap : require('weak-map');
+    WM = require('./weakmap');
 
 var isBrowser = typeof Node != 'undefined';
 
