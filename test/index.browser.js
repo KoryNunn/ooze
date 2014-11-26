@@ -3,13 +3,13 @@ var modelOperations = require('./modelOperations'),
     oozePaths = require('./paths'),
     get = modelOperations.get,
     set = modelOperations.set,
-    wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
+    wildcardRegex = oozePaths.wildcardRegex,
     arrayProto = [],
     WM = require('./weakmap');
 
 var isBrowser = typeof Node != 'undefined';
 
-module.exports = function(modelGet){
+module.exports = function(modelGet, ignoreReferencesInTypes){
     var modelBindings,
         modelBindingDetails,
         callbackReferenceDetails,
@@ -187,12 +187,8 @@ module.exports = function(modelGet){
         var parts = oozePaths.toParts(path),
             pathStub = oozePaths.join(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
 
-        var sanitized = path.replace(/(\.|\$)/g, '\\$1'),
-            wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
-            pathMatcher = new RegExp(wildcarded);
-
         callback.__boundCallback = function(event){
-            var matchedPath = event.target.match(pathMatcher);
+            var matchedPath = oozePaths.matchWildcards(path, event.target);
 
             if(matchedPath){
                 var replaced = 0;
@@ -303,7 +299,9 @@ module.exports = function(modelGet){
                         modelReferences.get(prop)[refPath] = null;
                     }
                 }else{
-                    addModelReference(refPath, prop);
+                    if(!ignoreReferencesInTypes || !ignoreReferencesInTypes.indexOf(object.constructor)>=0){
+                        addModelReference(refPath, prop);
+                    }
                 }
             }
         }
@@ -345,7 +343,7 @@ module.exports = function(modelGet){
         removeModelReference: removeModelReference
     };
 };
-},{"./modelOperations":2,"./paths":18,"./weakmap":20}],2:[function(require,module,exports){
+},{"./modelOperations":2,"./paths":23,"./weakmap":29}],2:[function(require,module,exports){
 var memoiseCache = {};
 
 // Lots of similarities between get and set, refactor later to reuse code.
@@ -458,6 +456,541 @@ module.exports = {
     set: set
 };
 },{}],3:[function(require,module,exports){
+(function (process){
+var EventEmitter = require('events').EventEmitter,
+    deepEqual = require('deep-equal'),
+    encodeResults = require('./results');
+
+var nextTick = process && process.nextTick || setTimeout;
+
+
+function instantiate(){
+    var testsToRun = [],
+        testsRun = [],
+        totalTests = 0,
+        totalAssersions = 0,
+        completedAssersions = 0,
+        begun = false,
+        timeout = 0,
+        only;
+
+    function Test(name, testFunction){
+        this._plan = 0;
+        this._count = 0;
+        this._assersions = [];
+        this.name = name;
+        this._testFunction = testFunction;
+    }
+
+    // Unused currently.
+    // Test.prototype = Object.create(EventEmitter.prototype);
+    // Test.prototype.constructor = Test;
+
+    function setTestTimeout(time){
+        timeout = Math.max(timeout, time);
+    }
+
+    Test.prototype.timeout = setTestTimeout;
+
+    Test.prototype.comment = function (message) {
+        // ToDo
+    };
+
+    Test.prototype.plan = function(ammount){
+        this._plan = ammount;
+    };
+
+    Test.prototype._run = function(){
+        var test = this;
+        try {
+            test._testFunction(this);
+        }
+        catch (err) {
+            test.error(err);
+        }
+    };
+
+    Test.prototype._assert = function(details){
+        if(details.operator !== 'end'){
+            this._count++;
+        }
+        if(this._ended){
+            if(details.operator === 'end' || details.operator === 'fail'){
+                return;
+            }
+            this.fail('asserted after test has ended');
+        }
+        this._assersions.push(details);
+    };
+
+    Test.prototype.end = function (message) {
+        var ok = this._plan === this._count;
+
+        if(this._ended){
+            return;
+        }
+
+        if(ok){
+            this._assert({
+                ok: true,
+                message: message,
+                operator: 'end'
+            });
+        }else{
+            this._assert({
+                ok: false,
+                expected: this._plan,
+                actual: this._count,
+                message: 'plan != count',
+                operator: 'end'
+            });
+        }
+
+        this._ended = true;
+    };
+
+    Test.prototype.error = function(error, message){
+        this._assert({
+            ok: !error,
+            message : message || String(error),
+            operator : 'error',
+            actual : error
+        });
+    };
+
+    Test.prototype.pass = function(message){
+        this._assert({
+            ok: true,
+            message: message,
+            operator: 'pass'
+        });
+    };
+
+    Test.prototype.fail = function(message){
+        this._assert({
+            message: message,
+            operator: 'fail'
+        });
+    };
+
+    Test.prototype.skip = function(message){
+        this._assert({
+            message: message,
+            skip: true,
+            operator: 'skip'
+        });
+    };
+
+    Test.prototype.ok = function(value, message){
+        this._assert({
+            actual: value,
+            ok: !!value,
+            message: message,
+            operator: 'ok'
+        });
+    };
+
+    Test.prototype.notOk = function(value, message){
+        this._assert({
+            actual: value,
+            ok:!value,
+            message: message,
+            operator: 'notOk'
+        });
+    };
+
+    Test.prototype.equal = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: value === expected,
+            message: message,
+            operator: 'equal'
+        });
+    };
+
+    Test.prototype.notEqual = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: value !== expected,
+            message: message,
+            operator: 'notEqual'
+        });
+    };
+
+    Test.prototype.deepEqual = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: deepEqual(value, expected, { strict: true }),
+            message: message,
+            operator: 'deepEqual'
+        });
+    };
+
+    Test.prototype.deepLooseEqual = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: deepEqual(value, expected),
+            message: message,
+            operator: 'deepLooseEqual'
+        });
+    };
+
+    Test.prototype.notDeepEqual = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: !deepEqual(value, expected, { strict: true }),
+            message: message,
+            operator: 'notDeepEqual'
+        });
+    };
+
+    Test.prototype.notDeepLooseEqual = function(value, expected, message){
+        this._assert({
+            actual: value,
+            expected: expected,
+            ok: !deepEqual(value, expected),
+            message: message,
+            operator: 'notDeepLooseEqual'
+        });
+    };
+
+    Test.prototype['throws'] = function (fn, expected, message) {
+        var caughtError,
+            passed;
+
+        if(typeof expected === 'string'){
+            message = expected;
+            expected = undefined;
+        }
+
+        try{
+            fn();
+        }catch(error){
+            caughtError = {error: error};
+        }
+
+        passed = caughtError;
+
+        if(expected instanceof RegExp){
+            passed = expected.test(caughtError && caughtError.error);
+            expected = String(expected);
+        }
+
+        this._assert({
+            ok: passed,
+            message : message || 'should throw',
+            operator : 'throws',
+            actual : caughtError && caughtError.error,
+            expected : expected,
+            error: !passed && caughtError && caughtError.error
+        });
+    };
+
+    Test.prototype.doesNotThrow = function (fn, expected, message) {
+        var caughtError;
+
+        if(typeof expected === 'string'){
+            message = expected;
+            expected = undefined;
+        }
+
+        try{
+            fn();
+        }catch(error){
+            caughtError = { error : error };
+        }
+
+        this._assert({
+            ok: !caughtError,
+            message: message || 'should not throw',
+            operator: 'doesNotThrow',
+            actual: caughtError && caughtError.error,
+            expected: expected,
+            error: caughtError && caughtError.error
+        });
+    };
+
+    function runNextTest(){
+        while(testsToRun.length){
+            var nextTest = testsToRun.shift();
+            nextTest._run();
+            testsRun.push(nextTest);
+        }
+    }
+
+    function complete(){
+        var results = encodeResults(testsRun);
+
+        if(testsToRun.length !== totalTests){
+            // tests level problem
+        }
+
+        grape.emit('complete', results[0]);
+
+        if(!grape.silent){
+            console.log(results[0]);
+            process.exit(results[1]);
+        }
+    }
+
+    function begin(){
+        if(!begun){
+            begun = true;
+            nextTick(runNextTest);
+            nextTick(function(){
+                if(!process || !process.on || grape.useTimeout){
+                    setTimeout(complete, timeout);
+                }else{
+                    process.on('exit', complete);
+                }
+            });
+        }
+    }
+
+    function grape(name, testFunction){
+        if(only){
+            return;
+        }
+        totalTests++;
+        testsToRun.push(new Test(name, testFunction));
+        begin();
+    }
+    grape.timeout = setTestTimeout;
+
+    grape.only = function(name, testFunction){
+        if(only){
+            throw "There can be only one only";
+        }
+        only = true;
+        testsToRun = [new Test(name, testFunction)];
+        begin();
+    };
+
+    for(var key in EventEmitter.prototype){
+        grape[key] = EventEmitter.prototype[key];
+    }
+
+    grape.createNewInstance = instantiate;
+    grape.Test = Test;
+
+    return grape;
+}
+
+module.exports = instantiate();
+
+}).call(this,require('_process'))
+},{"./results":7,"_process":39,"deep-equal":4,"events":35}],4:[function(require,module,exports){
+var pSlice = Array.prototype.slice;
+var objectKeys = require('./lib/keys.js');
+var isArguments = require('./lib/is_arguments.js');
+
+var deepEqual = module.exports = function (actual, expected, opts) {
+  if (!opts) opts = {};
+  // 7.1. All identical values are equivalent, as determined by ===.
+  if (actual === expected) {
+    return true;
+
+  } else if (actual instanceof Date && expected instanceof Date) {
+    return actual.getTime() === expected.getTime();
+
+  // 7.3. Other pairs that do not both pass typeof value == 'object',
+  // equivalence is determined by ==.
+  } else if (typeof actual != 'object' && typeof expected != 'object') {
+    return opts.strict ? actual === expected : actual == expected;
+
+  // 7.4. For all other Object pairs, including Array objects, equivalence is
+  // determined by having the same number of owned properties (as verified
+  // with Object.prototype.hasOwnProperty.call), the same set of keys
+  // (although not necessarily the same order), equivalent values for every
+  // corresponding key, and an identical 'prototype' property. Note: this
+  // accounts for both named and indexed properties on Arrays.
+  } else {
+    return objEquiv(actual, expected, opts);
+  }
+}
+
+function isUndefinedOrNull(value) {
+  return value === null || value === undefined;
+}
+
+function objEquiv(a, b, opts) {
+  if (isUndefinedOrNull(a) || isUndefinedOrNull(b))
+    return false;
+  // an identical 'prototype' property.
+  if (a.prototype !== b.prototype) return false;
+  //~~~I've managed to break Object.keys through screwy arguments passing.
+  //   Converting to array solves the problem.
+  if (isArguments(a)) {
+    if (!isArguments(b)) {
+      return false;
+    }
+    a = pSlice.call(a);
+    b = pSlice.call(b);
+    return deepEqual(a, b, opts);
+  }
+  try {
+    var ka = objectKeys(a),
+        kb = objectKeys(b),
+        key, i;
+  } catch (e) {//happens when one is a string literal and the other isn't
+    return false;
+  }
+  // having the same number of owned properties (keys incorporates
+  // hasOwnProperty)
+  if (ka.length != kb.length)
+    return false;
+  //the same set of keys (although not necessarily the same order),
+  ka.sort();
+  kb.sort();
+  //~~~cheap key test
+  for (i = ka.length - 1; i >= 0; i--) {
+    if (ka[i] != kb[i])
+      return false;
+  }
+  //equivalent values for every corresponding key, and
+  //~~~possibly expensive deep test
+  for (i = ka.length - 1; i >= 0; i--) {
+    key = ka[i];
+    if (!deepEqual(a[key], b[key], opts)) return false;
+  }
+  return true;
+}
+
+},{"./lib/is_arguments.js":5,"./lib/keys.js":6}],5:[function(require,module,exports){
+var supportsArgumentsClass = (function(){
+  return Object.prototype.toString.call(arguments)
+})() == '[object Arguments]';
+
+exports = module.exports = supportsArgumentsClass ? supported : unsupported;
+
+exports.supported = supported;
+function supported(object) {
+  return Object.prototype.toString.call(object) == '[object Arguments]';
+};
+
+exports.unsupported = unsupported;
+function unsupported(object){
+  return object &&
+    typeof object == 'object' &&
+    typeof object.length == 'number' &&
+    Object.prototype.hasOwnProperty.call(object, 'callee') &&
+    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
+    false;
+};
+
+},{}],6:[function(require,module,exports){
+exports = module.exports = typeof Object.keys === 'function'
+  ? Object.keys : shim;
+
+exports.shim = shim;
+function shim (obj) {
+  var keys = [];
+  for (var key in obj) keys.push(key);
+  return keys;
+}
+
+},{}],7:[function(require,module,exports){
+
+// Taken from https://github.com/substack/tape/blob/master/lib/results.js
+
+function encodeResult (result, count) {
+    var output = '';
+    output += (result.ok ? 'ok ' : 'not ok ') + count;
+    output += result.message ? ' ' + result.message.toString().replace(/\s+/g, ' ') : '';
+
+    if (result.skip) output += ' # SKIP';
+    else if (result.todo) output += ' # TODO';
+
+    output += '\n';
+    if (result.ok) return output;
+
+    var outer = '  ';
+    var inner = outer + '  ';
+    output += outer + '---\n';
+    output += inner + 'operator: ' + result.operator + '\n';
+
+    var ex = JSON.stringify(result.expected) || '';
+    var ac = JSON.stringify(result.actual) || '';
+
+    if (Math.max(ex.length, ac.length) > 65) {
+        output += inner + 'expected:\n' + inner + '  ' + ex + '\n';
+        output += inner + 'actual:\n' + inner + '  ' + ac + '\n';
+    }
+    else {
+        output += inner + 'expected: ' + ex + '\n';
+        output += inner + 'actual:   ' + ac + '\n';
+    }
+    if (result.at) {
+        output += inner + 'at: ' + result.at + '\n';
+    }
+    if (result.operator === 'error' && result.actual && result.actual.stack) {
+        var lines = String(result.actual.stack).split('\n');
+        output += inner + 'stack:\n';
+        output += inner + '  ' + lines[0] + '\n';
+        for (var i = 1; i < lines.length; i++) {
+            output += inner + lines[i] + '\n';
+        }
+    }
+
+    output += outer + '...\n';
+    return output;
+}
+
+function encodeResults(results){
+    var output = '',
+        count = 0,
+        passed = 0,
+        failed = 0;
+
+    for(var i = 0; i < results.length; i++) {
+        var test = results[i];
+
+        output += '# ' + test.name + '\n';
+
+        if(test._plan !== test._count){
+            test._assert({
+                ok: false,
+                expected: test._plan,
+                actual: test._count,
+                message: 'plan != count',
+                operator: 'end'
+            });
+        }
+
+        for(var j = 0; j < test._assersions.length; j++) {
+            var assersion = test._assersions[j];
+            count++;
+
+            if(assersion.ok){
+                passed++;
+            }else{
+                failed++;
+            }
+
+            output += encodeResult(assersion, count);
+        }
+    }
+
+    output += '\n1..' + count + '\n';
+    output += '# tests ' + count + '\n';
+    output += '# pass  ' + passed + '\n';
+
+    if(failed) {
+        output += '# fail  ' + failed + '\n';
+    }else{
+        output += '\n# ok\n';
+    }
+
+    return [output, failed];
+}
+
+module.exports = encodeResults;
+},{}],8:[function(require,module,exports){
 function validateKey(key){
     if(!key || !(typeof key === 'object' || typeof key === 'function')){
         throw key + " is not a valid WeakMap key.";
@@ -503,7 +1036,7 @@ LeakMap.prototype.toString = function(){
 };
 
 module.exports = LeakMap;
-},{}],4:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 (function (process){
 var defined = require('defined');
 var createDefaultStream = require('./lib/default_stream');
@@ -655,7 +1188,7 @@ function createHarness (conf_) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/default_stream":5,"./lib/results":6,"./lib/test":7,"_process":30,"defined":11,"through":15}],5:[function(require,module,exports){
+},{"./lib/default_stream":10,"./lib/results":11,"./lib/test":12,"_process":39,"defined":16,"through":20}],10:[function(require,module,exports){
 (function (process){
 var through = require('through');
 var fs = require('fs');
@@ -690,7 +1223,7 @@ module.exports = function () {
 };
 
 }).call(this,require('_process'))
-},{"_process":30,"fs":21,"through":15}],6:[function(require,module,exports){
+},{"_process":39,"fs":30,"through":20}],11:[function(require,module,exports){
 (function (process){
 var EventEmitter = require('events').EventEmitter;
 var inherits = require('inherits');
@@ -883,7 +1416,7 @@ function has (obj, prop) {
 }
 
 }).call(this,require('_process'))
-},{"_process":30,"events":26,"inherits":12,"object-inspect":13,"resumer":14,"through":15}],7:[function(require,module,exports){
+},{"_process":39,"events":35,"inherits":17,"object-inspect":18,"resumer":19,"through":20}],12:[function(require,module,exports){
 (function (process,__dirname){
 var Stream = require('stream');
 var deepEqual = require('deep-equal');
@@ -1349,7 +1882,7 @@ Test.skip = function (name_, _opts, _cb) {
 // vim: set softtabstop=4 shiftwidth=4:
 
 }).call(this,require('_process'),"/node_modules/tape/lib")
-},{"_process":30,"deep-equal":8,"defined":11,"events":26,"inherits":12,"path":29,"stream":43}],8:[function(require,module,exports){
+},{"_process":39,"deep-equal":13,"defined":16,"events":35,"inherits":17,"path":38,"stream":52}],13:[function(require,module,exports){
 var pSlice = Array.prototype.slice;
 var objectKeys = require('./lib/keys.js');
 var isArguments = require('./lib/is_arguments.js');
@@ -1445,47 +1978,18 @@ function objEquiv(a, b, opts) {
   return true;
 }
 
-},{"./lib/is_arguments.js":9,"./lib/keys.js":10}],9:[function(require,module,exports){
-var supportsArgumentsClass = (function(){
-  return Object.prototype.toString.call(arguments)
-})() == '[object Arguments]';
-
-exports = module.exports = supportsArgumentsClass ? supported : unsupported;
-
-exports.supported = supported;
-function supported(object) {
-  return Object.prototype.toString.call(object) == '[object Arguments]';
-};
-
-exports.unsupported = unsupported;
-function unsupported(object){
-  return object &&
-    typeof object == 'object' &&
-    typeof object.length == 'number' &&
-    Object.prototype.hasOwnProperty.call(object, 'callee') &&
-    !Object.prototype.propertyIsEnumerable.call(object, 'callee') ||
-    false;
-};
-
-},{}],10:[function(require,module,exports){
-exports = module.exports = typeof Object.keys === 'function'
-  ? Object.keys : shim;
-
-exports.shim = shim;
-function shim (obj) {
-  var keys = [];
-  for (var key in obj) keys.push(key);
-  return keys;
-}
-
-},{}],11:[function(require,module,exports){
+},{"./lib/is_arguments.js":14,"./lib/keys.js":15}],14:[function(require,module,exports){
+module.exports=require(5)
+},{"/home/kory/dev/ooze/node_modules/grape/node_modules/deep-equal/lib/is_arguments.js":5}],15:[function(require,module,exports){
+module.exports=require(6)
+},{"/home/kory/dev/ooze/node_modules/grape/node_modules/deep-equal/lib/keys.js":6}],16:[function(require,module,exports){
 module.exports = function () {
     for (var i = 0; i < arguments.length; i++) {
         if (arguments[i] !== undefined) return arguments[i];
     }
 };
 
-},{}],12:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -1510,7 +2014,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 module.exports = function inspect_ (obj, opts, depth, seen) {
     if (!opts) opts = {};
     
@@ -1639,7 +2143,7 @@ function inspectString (str) {
     }
 }
 
-},{}],14:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 (function (process){
 var through = require('through');
 var nextTick = typeof setImmediate !== 'undefined'
@@ -1672,7 +2176,7 @@ module.exports = function (write, end) {
 };
 
 }).call(this,require('_process'))
-},{"_process":30,"through":15}],15:[function(require,module,exports){
+},{"_process":39,"through":20}],20:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -1784,7 +2288,7 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":30,"stream":43}],16:[function(require,module,exports){
+},{"_process":39,"stream":52}],21:[function(require,module,exports){
 // Copyright (C) 2011 Google Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -2471,10 +2975,11 @@ function through (write, end, opts) {
   }
 })();
 
-},{}],17:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 var modelOpperations = require('./modelOperations')
     paths = require('./paths'),
     createEvents = require('./events'),
+    run = require('./run'),
     arrayProto = [],
     rootKey = '$';
 
@@ -2552,6 +3057,20 @@ Scope.prototype.bind = function(path, callback){
         scope._ooze.set(resolvedPath, value);
     };
 };
+
+Scope.prototype.run = function(parameters, fn){
+    if(!Array.isArray(parameters)){
+        parameters = [parameters];
+    }
+    parameters = parameters.slice();
+
+    var scope = this;
+    parameters = parameters.map(function(parameter){
+        return scope.resolve(parameter);
+    });
+    return this._ooze.run(parameters, fn);
+};
+
 
 /**
     ## Scope To
@@ -2701,11 +3220,13 @@ Scope.prototype.createTransform = function(path, transform){
     return this._ooze.createTransform(resolvedPath, transform);
 };
 
-function Ooze(model){
+function Ooze(model, ignoreReferencesInTypes){
     this._model = {};
     this._model[rootKey] = model;
-    this._events = createEvents(this.get.bind(this));
-    this._constraints = {};
+    this._events = createEvents(this.get.bind(this), ignoreReferencesInTypes);
+    this._constraints = {
+        _wildcards: []
+    };
     this._transformId = 0;
     return new Scope(this, rootKey);
 }
@@ -2714,9 +3235,14 @@ Ooze.prototype.get = function(path){
 };
 Ooze.prototype.set = function(path, value){
 
-    if(this._constraints[path]){
-        for(var i = 0; i < this._constraints[path].length; i++) {
-            value = this._constraints[path][i](value);
+    if(this._constraints[path] || this._constraints._wildcards.length){
+        var constraints = this._constraints[path] || [].concat(
+                this._constraints._wildcards.filter(function(constraint){
+                    return paths.matchWildcards(constraint.path, path);
+                })
+            );
+        for(var i = 0; i < constraints.length; i++) {
+            value = constraints[i].callback(value);
         }
     }
 
@@ -2729,6 +3255,7 @@ Ooze.prototype.set = function(path, value){
         return;
     }
 
+    this._events.addModelReference(path, value);
     modelOpperations.set(path, value, this._model);
     this.trigger(path);
 };
@@ -2794,8 +3321,18 @@ Ooze.prototype.trigger = function(path){
     this._events.trigger(path);
 };
 Ooze.prototype.addConstraint = function(path, callback){
-    this._constraints[path] = this._constraints[path] || [];
-    this._constraints[path].push(callback);
+    if(paths.containsWildcards(path)){
+        this._constraints._wildcards.push({
+            path: path,
+            callback: callback
+        });
+    }else{
+        this._constraints[path] = this._constraints[path] || [];
+        this._constraints[path].push({
+            path: path,
+            callback:callback
+        });
+    }
 };
 Ooze.prototype.removeConstraint = function(path, callback){
     if(!this._constraints[path]){
@@ -2857,11 +3394,16 @@ Ooze.prototype.createTransform = function(params, transform){
     return transformScope;
 };
 
+Ooze.prototype.run = function(parameters, fn){
+    return run(this, parameters, fn);
+};
+
 module.exports = Ooze;
 
-},{"./events":1,"./modelOperations":2,"./paths":18}],18:[function(require,module,exports){
+},{"./events":1,"./modelOperations":2,"./paths":23,"./run":24}],23:[function(require,module,exports){
 var pathSeparator = '.',
-    wildcard = '*';
+    wildcard = '*',
+    wildcardRegex = new RegExp('(\\' + wildcard + ')', 'g');
 
 function pathToParts(path){
     if(!path){
@@ -2916,19 +3458,282 @@ function up(path, number){
     return join(pathToParts(path).slice(0,-number));
 }
 
+function containsWildcards(path){
+    return path && path.indexOf(wildcard) >= 0;
+}
+
+function matchWildcards(wildcardedPath, path){
+    var sanitized = wildcardedPath.replace(/(\.|\$)/g, '\\$1'),
+        wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
+        pathMatcher = new RegExp(wildcarded);
+
+    return path.match(pathMatcher);
+}
+
 module.exports = {
     join: join,
     concat: concat,
     toParts: pathToParts,
     up: up,
+    containsWildcards: containsWildcards,
+    matchWildcards: matchWildcards,
     constants:{
         separator: pathSeparator,
         wildcard: wildcard
-    }
+    },
+    wildcardRegex: wildcardRegex
 };
-},{}],19:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
+var paths = require('./paths');
+
+function parse(parameter){
+    var parts = paths.toParts(parameter),
+        keyParts = parts[parts.length-1].split(':');
+
+    parts[parts.length-1] = keyParts[0];
+
+    return {
+        path: paths.join(parts),
+        key: keyParts[1] || keyParts[0]
+    };
+}
+
+function run(model, parameters, fn){
+    var originalScope = {},
+        scope = {};
+
+    if(!Array.isArray(parameters)){
+        parameters = [parameters];
+    }
+
+    var pathMap = [];
+
+    parameters.forEach(function(parameter){
+        var map = parse(parameter);
+
+        if(map.key in scope){
+            throw 'two paths with the same final key were passed to run, alias conflicting keys with a colon ("foo.a", "bar.a:barA")';
+        }
+        originalScope[map.key] = scope[map.key] = model.get(map.path);
+        pathMap.push(map);
+    });
+
+    var result = fn(scope);
+
+    pathMap.forEach(function(map){
+
+        if(scope[map.key] && typeof scope[map.key] === 'object' && scope[map.key] === originalScope[map.key]){
+            model.trigger(map.path);
+        }else{
+            model.set(map.path, scope[map.key]);
+        }
+    });
+
+    return result;
+}
+
+module.exports = run;
+},{"./paths":23}],25:[function(require,module,exports){
+var Ooze = require('../'),
+    run = require('../run'),
+    test = require('grape');
+
+
+test('run set', function(t){
+    t.plan(1);
+
+    var model = new Ooze();
+
+    model.run(['foo', 'bar'], function(scope){
+        scope.foo = 10;
+    });
+
+    t.equal(model.get('foo'), 10);
+});
+
+test('run set triggers events', function(t){
+    t.plan(1);
+
+    var model = new Ooze();
+
+    model.on('foo', function(){
+        t.equal(this.path, '$.foo');
+    });
+
+    model.run(['foo'], function(scope){
+        scope.foo = 10;
+    });
+});
+
+test('run set triggers events for references', function(t){
+    t.plan(2);
+
+    var model = new Ooze();
+
+    run(model, ['foo', 'bar'], function(scope){
+        scope.foo = scope.bar = {};
+    });
+
+    model.on('foo', function(){
+        t.equal(this.path, '$.foo');
+        t.equal(this.target, '$.bar');
+    });
+
+    model.run(['bar'], function(scope){
+        scope.bar.things = 'stuff';
+    });
+
+});
+},{"../":22,"../run":24,"grape":3}],26:[function(require,module,exports){
+var Ooze = require('../'),
+    run = require('../run'),
+    test = require('grape');
+
+
+test('run set', function(t){
+    t.plan(1);
+
+    var model = new Ooze();
+
+    run(model, ['foo', 'bar'], function(scope){
+        scope.foo = 10;
+    });
+
+    t.equal(model.get('foo'), 10);
+});
+
+test('run set triggers events', function(t){
+    t.plan(1);
+
+    var model = new Ooze();
+
+    model.on('foo', function(){
+        t.equal(this.path, '$.foo');
+    });
+
+    run(model, ['foo'], function(scope){
+        scope.foo = 10;
+    });
+});
+
+test('run set triggers events for references', function(t){
+    t.plan(2);
+
+    var model = new Ooze();
+
+    run(model, ['foo', 'bar'], function(scope){
+        scope.foo = scope.bar = {};
+    });
+
+    model.on('foo', function(){
+        t.equal(this.path, '$.foo');
+        t.equal(this.target, '$.bar');
+    });
+
+    run(model, ['bar'], function(scope){
+        scope.bar.things = 'stuff';
+    });
+
+});
+
+test('run with same keys', function(t){
+    t.plan(1);
+
+    var model = new Ooze({
+        foo:{},
+        bar:{}
+    });
+
+    t.throws(function(){
+        run(model, ['foo.a', 'bar.a'], function(scope){
+            // Nonsensical code...
+            scope.a = 5;
+            scope.a = 10;
+        });
+    });
+});
+
+test('run with aliased keys', function(t){
+    t.plan(2);
+
+    var model = new Ooze({
+        foo:{},
+        bar:{}
+    });
+
+    run(model, ['foo.a:fooA', 'bar.a:barA'], function(scope){
+        scope.fooA = 5;
+        scope.barA = 10;
+    });
+
+    t.equal(model.get('foo.a'), 5);
+    t.equal(model.get('bar.a'), 10);
+});
+},{"../":22,"../run":24,"grape":3}],27:[function(require,module,exports){
+var Ooze = require('../'),
+    run = require('../run'),
+    test = require('grape');
+
+function createScope(){
+    var model = new Ooze({
+        target: {}
+    });
+
+    return model.scopeTo('target');
+}
+
+test('run set', function(t){
+    t.plan(1);
+
+    var scope = createScope();
+
+    scope.run(['foo', 'bar'], function(scope){
+        scope.foo = 10;
+    });
+
+    t.equal(scope.get('foo'), 10);
+});
+
+test('run set triggers events', function(t){
+    t.plan(1);
+
+    var scope = createScope();
+
+    scope.on('foo', function(){
+        t.equal(this.path, '$.target.foo');
+    });
+
+    scope.run(['foo'], function(scope){
+        scope.foo = 10;
+    });
+});
+
+test('run set triggers events for references', function(t){
+    t.plan(2);
+
+    var scope = createScope();
+
+    run(scope, ['foo', 'bar'], function(scope){
+        scope.foo = scope.bar = {};
+    });
+
+    scope.on('foo', function(){
+        t.equal(this.path, '$.target.foo');
+        t.equal(this.target, '$.target.bar');
+    });
+
+    scope.run(['bar'], function(scope){
+        scope.bar.things = 'stuff';
+    });
+
+});
+},{"../":22,"../run":24,"grape":3}],28:[function(require,module,exports){
 var test = require('tape'),
     Ooze = require('../');
+
+require('./run');
+require('./oozeRun');
+require('./scopeRun');
 
 test('get', function(t){
     t.plan(1);
@@ -3213,7 +4018,7 @@ test('transform updates', function(t){
 
     model.set('a.5.b', 4);
 });
-},{"../":17,"tape":4}],20:[function(require,module,exports){
+},{"../":22,"./oozeRun":25,"./run":26,"./scopeRun":27,"tape":9}],29:[function(require,module,exports){
 var WM;
 
 if(typeof WeakMap !== 'undefined'){
@@ -3231,9 +4036,9 @@ if(typeof WeakMap !== 'undefined'){
 WM || (WM = require('weak-map'));
 
 module.exports = WM;
-},{"leak-map":3,"weak-map":16}],21:[function(require,module,exports){
+},{"leak-map":8,"weak-map":21}],30:[function(require,module,exports){
 
-},{}],22:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -4285,7 +5090,7 @@ function decodeUtf8Char (str) {
   }
 }
 
-},{"base64-js":23,"ieee754":24,"is-array":25}],23:[function(require,module,exports){
+},{"base64-js":32,"ieee754":33,"is-array":34}],32:[function(require,module,exports){
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 ;(function (exports) {
@@ -4407,7 +5212,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	exports.fromByteArray = uint8ToBase64
 }(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
 
-},{}],24:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 exports.read = function(buffer, offset, isLE, mLen, nBytes) {
   var e, m,
       eLen = nBytes * 8 - mLen - 1,
@@ -4493,7 +5298,7 @@ exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128;
 };
 
-},{}],25:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 
 /**
  * isArray
@@ -4528,7 +5333,7 @@ module.exports = isArray || function (val) {
   return !! val && '[object Array]' == str.call(val);
 };
 
-},{}],26:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4831,14 +5636,14 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],27:[function(require,module,exports){
-module.exports=require(12)
-},{"/home/kory/dev/ooze/node_modules/tape/node_modules/inherits/inherits_browser.js":12}],28:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
+module.exports=require(17)
+},{"/home/kory/dev/ooze/node_modules/tape/node_modules/inherits/inherits_browser.js":17}],37:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],29:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5066,7 +5871,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":30}],30:[function(require,module,exports){
+},{"_process":39}],39:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -5131,10 +5936,10 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],31:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":32}],32:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":41}],41:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5227,7 +6032,7 @@ function forEach (xs, f) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_readable":34,"./_stream_writable":36,"_process":30,"core-util-is":37,"inherits":27}],33:[function(require,module,exports){
+},{"./_stream_readable":43,"./_stream_writable":45,"_process":39,"core-util-is":46,"inherits":36}],42:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5275,7 +6080,7 @@ PassThrough.prototype._transform = function(chunk, encoding, cb) {
   cb(null, chunk);
 };
 
-},{"./_stream_transform":35,"core-util-is":37,"inherits":27}],34:[function(require,module,exports){
+},{"./_stream_transform":44,"core-util-is":46,"inherits":36}],43:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6261,7 +7066,7 @@ function indexOf (xs, x) {
 }
 
 }).call(this,require('_process'))
-},{"_process":30,"buffer":22,"core-util-is":37,"events":26,"inherits":27,"isarray":28,"stream":43,"string_decoder/":38}],35:[function(require,module,exports){
+},{"_process":39,"buffer":31,"core-util-is":46,"events":35,"inherits":36,"isarray":37,"stream":52,"string_decoder/":47}],44:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6473,7 +7278,7 @@ function done(stream, er) {
   return stream.push(null);
 }
 
-},{"./_stream_duplex":32,"core-util-is":37,"inherits":27}],36:[function(require,module,exports){
+},{"./_stream_duplex":41,"core-util-is":46,"inherits":36}],45:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6863,7 +7668,7 @@ function endWritable(stream, state, cb) {
 }
 
 }).call(this,require('_process'))
-},{"./_stream_duplex":32,"_process":30,"buffer":22,"core-util-is":37,"inherits":27,"stream":43}],37:[function(require,module,exports){
+},{"./_stream_duplex":41,"_process":39,"buffer":31,"core-util-is":46,"inherits":36,"stream":52}],46:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6973,7 +7778,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 }).call(this,require("buffer").Buffer)
-},{"buffer":22}],38:[function(require,module,exports){
+},{"buffer":31}],47:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7196,10 +8001,10 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":22}],39:[function(require,module,exports){
+},{"buffer":31}],48:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":33}],40:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":42}],49:[function(require,module,exports){
 exports = module.exports = require('./lib/_stream_readable.js');
 exports.Readable = exports;
 exports.Writable = require('./lib/_stream_writable.js');
@@ -7207,13 +8012,13 @@ exports.Duplex = require('./lib/_stream_duplex.js');
 exports.Transform = require('./lib/_stream_transform.js');
 exports.PassThrough = require('./lib/_stream_passthrough.js');
 
-},{"./lib/_stream_duplex.js":32,"./lib/_stream_passthrough.js":33,"./lib/_stream_readable.js":34,"./lib/_stream_transform.js":35,"./lib/_stream_writable.js":36}],41:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":41,"./lib/_stream_passthrough.js":42,"./lib/_stream_readable.js":43,"./lib/_stream_transform.js":44,"./lib/_stream_writable.js":45}],50:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":35}],42:[function(require,module,exports){
+},{"./lib/_stream_transform.js":44}],51:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":36}],43:[function(require,module,exports){
+},{"./lib/_stream_writable.js":45}],52:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7342,4 +8147,4 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":26,"inherits":27,"readable-stream/duplex.js":31,"readable-stream/passthrough.js":39,"readable-stream/readable.js":40,"readable-stream/transform.js":41,"readable-stream/writable.js":42}]},{},[19]);
+},{"events":35,"inherits":36,"readable-stream/duplex.js":40,"readable-stream/passthrough.js":48,"readable-stream/readable.js":49,"readable-stream/transform.js":50,"readable-stream/writable.js":51}]},{},[28]);

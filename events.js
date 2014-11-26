@@ -2,13 +2,13 @@ var modelOperations = require('./modelOperations'),
     oozePaths = require('./paths'),
     get = modelOperations.get,
     set = modelOperations.set,
-    wildcardRegex = new RegExp('(\\' + oozePaths.constants.wildcard + ')', 'g'),
+    wildcardRegex = oozePaths.wildcardRegex,
     arrayProto = [],
     WM = require('./weakmap');
 
 var isBrowser = typeof Node != 'undefined';
 
-module.exports = function(modelGet){
+module.exports = function(modelGet, ignoreReferencesInTypes){
     var modelBindings,
         modelBindingDetails,
         callbackReferenceDetails,
@@ -186,12 +186,8 @@ module.exports = function(modelGet){
         var parts = oozePaths.toParts(path),
             pathStub = oozePaths.join(parts.slice(0, parts.indexOf(oozePaths.constants.wildcard)));
 
-        var sanitized = path.replace(/(\.|\$)/g, '\\$1'),
-            wildcarded = sanitized.replace(wildcardRegex, '(.*?)'),
-            pathMatcher = new RegExp(wildcarded);
-
         callback.__boundCallback = function(event){
-            var matchedPath = event.target.match(pathMatcher);
+            var matchedPath = oozePaths.matchWildcards(path, event.target);
 
             if(matchedPath){
                 var replaced = 0;
@@ -302,7 +298,9 @@ module.exports = function(modelGet){
                         modelReferences.get(prop)[refPath] = null;
                     }
                 }else{
-                    addModelReference(refPath, prop);
+                    if(!ignoreReferencesInTypes || !ignoreReferencesInTypes.indexOf(object.constructor)>=0){
+                        addModelReference(refPath, prop);
+                    }
                 }
             }
         }

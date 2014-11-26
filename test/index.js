@@ -1,6 +1,10 @@
 var test = require('tape'),
     Ooze = require('../');
 
+require('./run');
+require('./oozeRun');
+require('./scopeRun');
+
 test('get', function(t){
     t.plan(1);
 
