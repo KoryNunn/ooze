@@ -1,7 +1,7 @@
 {
   "name": "ooze",
   "version": "1.1.1",
-  "description": "",
+  "description": "Ooze ====",
   "main": "ooze.js",
   "scripts": {
     "test": "node ./test",
@@ -16,5 +16,17 @@
   },
   "devDependencies": {
     "tape": "^3.0.3"
-  }
+  },
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KoryNunn/ooze.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/KoryNunn/ooze/issues"
+  },
+  "homepage": "https://github.com/KoryNunn/ooze#readme"
 }
